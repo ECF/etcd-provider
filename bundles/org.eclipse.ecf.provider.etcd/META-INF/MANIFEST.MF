@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: %bundleName
+Bundle-SymbolicName: org.eclipse.ecf.provider.etcd
+Bundle-Version: 1.0.0.qualifier
+Bundle-Vendor: %bundleProvider
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Bundle-Localization: bundle
+Bundle-ActivationPolicy: lazy
+Bundle-Activator: org.eclipse.ecf.internal.provider.etcd.Activator
+Import-Package: org.eclipse.ecf.core.identity;version="3.2.0",
+ org.osgi.framework
+Export-Package: org.eclipse.ecf.internal.provider.etcd;x-internal:=true,
+ org.eclipse.ecf.provider.etcd.identity
