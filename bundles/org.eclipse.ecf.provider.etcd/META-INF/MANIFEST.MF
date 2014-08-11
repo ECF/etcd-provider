@@ -8,7 +8,15 @@ Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-Localization: bundle
 Bundle-ActivationPolicy: lazy
 Bundle-Activator: org.eclipse.ecf.internal.provider.etcd.Activator
-Import-Package: org.eclipse.ecf.core.identity;version="3.2.0",
+Import-Package: org.eclipse.ecf.core;version="3.0.0",
+ org.eclipse.ecf.core.identity;version="3.2.0",
+ org.eclipse.ecf.core.provider;version="3.1.0",
+ org.eclipse.ecf.core.security;version="3.1.0",
+ org.eclipse.ecf.discovery;version="4.1.0",
+ org.eclipse.ecf.discovery.identity;version="3.0.0",
+ org.eclipse.ecf.discovery.service;version="2.0.0",
+ org.eclipse.equinox.concurrent.future;version="1.1.0",
  org.osgi.framework
 Export-Package: org.eclipse.ecf.internal.provider.etcd;x-internal:=true,
  org.eclipse.ecf.provider.etcd.identity
+Require-Bundle: org.eclipse.equinox.common
