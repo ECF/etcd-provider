@@ -15,7 +15,7 @@ import org.eclipse.ecf.core.provider.IContainerInstantiator;
 import org.eclipse.ecf.discovery.IDiscoveryAdvertiser;
 import org.eclipse.ecf.discovery.IDiscoveryLocator;
 
-public class EtcDiscoveryContainerInstantiator implements
+public class EtcdDiscoveryContainerInstantiator implements
 		IContainerInstantiator {
 
 	public static final String NAME = "ecf.discovery.etcd"; //$NON-NLS-1$

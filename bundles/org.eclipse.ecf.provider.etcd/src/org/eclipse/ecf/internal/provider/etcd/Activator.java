@@ -8,7 +8,9 @@
  ******************************************************************************/
 package org.eclipse.ecf.internal.provider.etcd;
 
+import org.eclipse.ecf.core.ContainerTypeDescription;
 import org.eclipse.ecf.core.identity.Namespace;
+import org.eclipse.ecf.provider.etcd.EtcdDiscoveryContainerInstantiator;
 import org.eclipse.ecf.provider.etcd.identity.EtcdNamespace;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
@@ -34,6 +36,7 @@ public class Activator implements BundleActivator {
 	public void start(BundleContext ctxt) throws Exception {
 		context = ctxt;
 		context.registerService(Namespace.class, new EtcdNamespace(), null);
+		context.registerService(ContainerTypeDescription.class, new ContainerTypeDescription(EtcdDiscoveryContainerInstantiator.NAME, new EtcdDiscoveryContainerInstantiator(), "Etcd Discovery Container", true, false), null); //$NON-NLS-1$
 	}
 
 	public void stop(BundleContext context) throws Exception {

@@ -73,7 +73,7 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 
 	@Override
 	public String getContainerName() {
-		return EtcDiscoveryContainerInstantiator.NAME;
+		return EtcdDiscoveryContainerInstantiator.NAME;
 	}
 
 	public void connect(ID targetID, IConnectContext connectContext)
