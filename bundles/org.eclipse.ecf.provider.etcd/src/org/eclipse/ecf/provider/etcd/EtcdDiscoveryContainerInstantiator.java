@@ -8,6 +8,9 @@
  ******************************************************************************/
 package org.eclipse.ecf.provider.etcd;
 
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+
 import org.eclipse.ecf.core.ContainerCreateException;
 import org.eclipse.ecf.core.ContainerTypeDescription;
 import org.eclipse.ecf.core.IContainer;
@@ -19,11 +22,23 @@ public class EtcdDiscoveryContainerInstantiator implements
 		IContainerInstantiator {
 
 	public static final String NAME = "ecf.discovery.etcd"; //$NON-NLS-1$
-	
+
 	public IContainer createInstance(ContainerTypeDescription description,
 			Object[] parameters) throws ContainerCreateException {
-		// TODO Auto-generated method stub
-		return null;
+
+		EtcdDiscoveryContainer result = null;
+		if (parameters == null) {
+			try {
+				result = new EtcdDiscoveryContainer();
+			} catch (MalformedURLException e) {
+				throw new ContainerCreateException(
+						"Could not create etcd discovery container", e); //$NON-NLS-1$
+			} catch (URISyntaxException e) {
+				throw new ContainerCreateException(
+						"Could not create etcd discovery container", e); //$NON-NLS-1$
+			}
+		}
+		return result;
 	}
 
 	public String[] getSupportedAdapterTypes(
@@ -38,7 +53,7 @@ public class EtcdDiscoveryContainerInstantiator implements
 	@SuppressWarnings("rawtypes")
 	public Class[][] getSupportedParameterTypes(
 			ContainerTypeDescription description) {
-		return new Class[][] { { String.class } };
+		return new Class[][] { { String.class, Void.class } };
 	}
 
 	public String[] getSupportedIntents(ContainerTypeDescription description) {
