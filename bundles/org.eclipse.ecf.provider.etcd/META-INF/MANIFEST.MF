@@ -18,6 +18,7 @@ Import-Package: org.eclipse.ecf.core;version="3.0.0",
  org.eclipse.ecf.discovery.identity;version="3.0.0",
  org.eclipse.ecf.discovery.service;version="2.0.0",
  org.eclipse.equinox.concurrent.future;version="1.1.0",
+ org.json,
  org.osgi.framework,
  org.osgi.util.tracker;version="1.5.1"
 Export-Package: org.eclipse.ecf.internal.provider.etcd;x-internal:=true,

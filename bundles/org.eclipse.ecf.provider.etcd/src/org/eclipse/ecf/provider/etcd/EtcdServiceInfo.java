@@ -10,6 +10,7 @@ package org.eclipse.ecf.provider.etcd;
 
 import java.net.URI;
 
+import org.eclipse.ecf.discovery.IServiceInfo;
 import org.eclipse.ecf.discovery.IServiceProperties;
 import org.eclipse.ecf.discovery.ServiceInfo;
 import org.eclipse.ecf.discovery.identity.IServiceTypeID;
@@ -41,6 +42,13 @@ public class EtcdServiceInfo extends ServiceInfo {
 			IServiceTypeID aServiceTypeID, int priority, int weight,
 			IServiceProperties props, long ttl) {
 		super(anURI, aServiceName, aServiceTypeID, priority, weight, props, ttl);
+	}
+
+	public EtcdServiceInfo(IServiceInfo serviceInfo) {
+		this(serviceInfo.getLocation(), serviceInfo.getServiceName(),
+				serviceInfo.getServiceID().getServiceTypeID(), serviceInfo
+						.getPriority(), serviceInfo.getWeight(), serviceInfo
+						.getServiceProperties(), serviceInfo.getTTL());
 	}
 
 }
