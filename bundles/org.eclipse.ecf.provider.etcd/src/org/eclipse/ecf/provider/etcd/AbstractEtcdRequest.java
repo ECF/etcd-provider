@@ -13,7 +13,16 @@ public abstract class AbstractEtcdRequest extends AbstractEtcdProtocol {
 	public static final int GET = 0x00;
 	public static final int PUT = 0x10;
 	public static final int DELETE = 0x100;
+	private final int requestType;
 
-	public abstract int getHttpRequestType();
+	public AbstractEtcdRequest(int type) {
+		this.requestType = type;
+	}
+
+	public int getHttpRequestType() {
+		return requestType;
+	}
+
+	public abstract AbstractEtcdResponse execute() throws EtcdException;
 
 }

@@ -49,13 +49,18 @@ public class EtcdNode {
 			return null;
 	}
 
+	public static String getOptString(JSONObject jsonObject, String key) {
+		String result = jsonObject.optString(key);
+		return ("".equals(result)) ? null : result; //$NON-NLS-1$
+	}
+
 	public EtcdNode(JSONObject jsonObject) throws JSONException {
 		Assert.isNotNull(jsonObject);
-		this.createdIndex = jsonObject.getInt(CREATEDINDEX_KEY);
 		this.directory = jsonObject.optBoolean(DIR_KEY);
-		this.expiration = jsonObject.optString(EXPIRATION_KEY);
+		this.createdIndex = jsonObject.optInt(CREATEDINDEX_KEY);
+		this.expiration = getOptString(jsonObject, EXPIRATION_KEY);
 		this.key = jsonObject.getString(KEY_KEY);
-		this.modifiedIndex = jsonObject.getInt(MODIFIEDINDEX_KEY);
+		this.modifiedIndex = jsonObject.optInt(MODIFIEDINDEX_KEY);
 		this.ttl = jsonObject.optInt(TTL_KEY);
 		this.value = jsonObject.optString(VALUE_KEY);
 		this.nodes = createNodes(jsonObject);

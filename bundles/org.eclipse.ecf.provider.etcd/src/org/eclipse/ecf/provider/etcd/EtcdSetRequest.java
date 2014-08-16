@@ -10,11 +10,14 @@ package org.eclipse.ecf.provider.etcd;
 
 public class EtcdSetRequest extends AbstractEtcdRequest {
 
-	private int httpRequestType;
+	public EtcdSetRequest(int type) {
+		super(PUT);
+	}
 
 	@Override
-	public int getHttpRequestType() {
-		return httpRequestType;
+	public AbstractEtcdResponse execute() throws EtcdException {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

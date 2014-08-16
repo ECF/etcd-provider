@@ -9,5 +9,9 @@
 package org.eclipse.ecf.provider.etcd;
 
 public abstract class AbstractEtcdResponse extends AbstractEtcdProtocol {
+	public abstract boolean isError();
 
+	public abstract EtcdResponse getResponse();
+
+	public abstract EtcdError getError();
 }

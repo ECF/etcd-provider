@@ -1,5 +1,6 @@
 package org.eclipse.ecf.provider.etcd;
 
+import java.util.List;
 import java.util.Map;
 
 import org.json.JSONException;
@@ -12,14 +13,14 @@ public class EtcdError extends AbstractEtcdResponse {
 	public static final String INDEX_KEY = "index"; //$NON-NLS-1$
 	public static final String MESSAGE_KEY = "message"; //$NON-NLS-1$
 
-	private Map<String, Object> responseHeaders;
+	private Map<String, List<String>> responseHeaders;
 
 	private final String cause;
 	private final int errorCode;
 	private final int index;
 	private final String message;
 
-	public EtcdError(String json, Map<String, Object> headers)
+	public EtcdError(String json, Map<String, List<String>> headers)
 			throws JSONException {
 		JSONObject jsonObject = new JSONObject(json);
 		this.cause = jsonObject.getString(CAUSE_KEY);
@@ -29,7 +30,7 @@ public class EtcdError extends AbstractEtcdResponse {
 		this.responseHeaders = headers;
 	}
 
-	public Map<String, Object> getResponseHeaders() {
+	public Map<String, List<String>> getResponseHeaders() {
 		return responseHeaders;
 	}
 
@@ -51,9 +52,25 @@ public class EtcdError extends AbstractEtcdResponse {
 
 	@Override
 	public String toString() {
-		return "EtcdError [responseHeaders=" + responseHeaders + ", cause=" //$NON-NLS-1$ //$NON-NLS-2$
-				+ cause + ", errorCode=" + errorCode + ", index=" + index //$NON-NLS-1$ //$NON-NLS-2$
-				+ ", message=" + message + "]"; //$NON-NLS-1$ //$NON-NLS-2$
+		return "EtcdError[cause=" //$NON-NLS-1$
+				+ cause
+				+ ", errorCode=" + errorCode + ", index=" + index //$NON-NLS-1$ //$NON-NLS-2$
+				+ ", message=" + message + ", responseHeaders=" + responseHeaders + "]"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+	}
+
+	@Override
+	public boolean isError() {
+		return true;
+	}
+
+	@Override
+	public EtcdResponse getResponse() {
+		return null;
+	}
+
+	@Override
+	public EtcdError getError() {
+		return this;
 	}
 
 }

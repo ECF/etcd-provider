@@ -16,6 +16,7 @@ package org.eclipse.ecf.provider.etcd;
  * 
  * Contributors: Scott Lewis - initial API and implementation
  ******************************************************************************/
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.Assert;
@@ -24,13 +25,13 @@ import org.json.JSONObject;
 
 public class EtcdResponse extends AbstractEtcdResponse {
 
-	private Map<String, Object> responseHeaders;
+	private Map<String, List<String>> responseHeaders;
 
 	private final String action;
 	private final EtcdNode etcdNode;
 	private final EtcdNode previousNode;
 
-	public EtcdResponse(String json, Map<String, Object> headers)
+	public EtcdResponse(String json, Map<String, List<String>> headers)
 			throws JSONException {
 		JSONObject jsonObject = new JSONObject(json);
 		this.action = jsonObject.getString(ACTION_KEY);
@@ -42,7 +43,7 @@ public class EtcdResponse extends AbstractEtcdResponse {
 		this.responseHeaders = headers;
 	}
 
-	public Map<String, Object> getResponseHeaders() {
+	public Map<String, List<String>> getResponseHeaders() {
 		return responseHeaders;
 	}
 
@@ -60,9 +61,24 @@ public class EtcdResponse extends AbstractEtcdResponse {
 
 	@Override
 	public String toString() {
-		return "EtcdResponse [responseHeaders=" + responseHeaders + ", action=" //$NON-NLS-1$ //$NON-NLS-2$
+		return "EtcdResponse[action=" //$NON-NLS-1$
 				+ action + ", etcdNode=" + etcdNode + ", previousNode=" //$NON-NLS-1$ //$NON-NLS-2$
-				+ previousNode + "]"; //$NON-NLS-1$
+				+ previousNode + ", responseHeaders=" + responseHeaders + "]"; //$NON-NLS-1$ //$NON-NLS-2$
+	}
+
+	@Override
+	public boolean isError() {
+		return false;
+	}
+
+	@Override
+	public EtcdResponse getResponse() {
+		return this;
+	}
+
+	@Override
+	public EtcdError getError() {
+		return null;
 	}
 
 }
