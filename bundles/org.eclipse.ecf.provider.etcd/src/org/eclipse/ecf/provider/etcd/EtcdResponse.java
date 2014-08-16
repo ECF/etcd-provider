@@ -19,6 +19,7 @@ package org.eclipse.ecf.provider.etcd;
 import java.util.Map;
 
 import org.eclipse.core.runtime.Assert;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class EtcdResponse extends AbstractEtcdResponse {
@@ -30,7 +31,7 @@ public class EtcdResponse extends AbstractEtcdResponse {
 	private final EtcdNode previousNode;
 
 	public EtcdResponse(String json, Map<String, Object> headers)
-			throws Exception {
+			throws JSONException {
 		JSONObject jsonObject = new JSONObject(json);
 		this.action = jsonObject.getString(ACTION_KEY);
 		Assert.isNotNull(this.action,
@@ -41,7 +42,7 @@ public class EtcdResponse extends AbstractEtcdResponse {
 		this.responseHeaders = headers;
 	}
 
-	public Map<String, Object> getHeaders() {
+	public Map<String, Object> getResponseHeaders() {
 		return responseHeaders;
 	}
 
