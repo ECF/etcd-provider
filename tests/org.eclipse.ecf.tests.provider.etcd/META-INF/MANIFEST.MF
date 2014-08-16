@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Etcd Provider Tests
+Bundle-SymbolicName: org.eclipse.ecf.tests.provider.etcd
+Bundle-Version: 1.0.0.qualifier
+Bundle-Vendor: Eclipse.org - ECF
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Require-Bundle: org.eclipse.ecf.tests.discovery;bundle-version="2.0.0",
+ org.eclipse.equinox.common;bundle-version="3.6.200",
+ org.eclipse.ecf.discovery;bundle-version="5.0.0",
+ org.eclipse.ecf.provider.etcd;bundle-version="1.0.0",
+ org.junit;bundle-version="4.11.0",
+ org.json;bundle-version="1.0.0",
+ org.eclipse.ecf;bundle-version="3.4.0"
+Bundle-ActivationPolicy: lazy
