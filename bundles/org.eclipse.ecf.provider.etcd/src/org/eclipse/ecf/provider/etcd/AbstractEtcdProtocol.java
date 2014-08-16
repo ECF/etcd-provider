@@ -13,5 +13,5 @@ public abstract class AbstractEtcdProtocol {
 	public static final String ACTION_KEY = "action"; //$NON-NLS-1$
 	public static final String NODE_KEY = "node"; //$NON-NLS-1$
 	public static final String PREVIOUSNODE_KEY = "prevNode"; //$NON-NLS-1$
-	
+
 }

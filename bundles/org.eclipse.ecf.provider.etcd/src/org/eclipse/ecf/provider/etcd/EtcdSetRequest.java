@@ -11,6 +11,7 @@ package org.eclipse.ecf.provider.etcd;
 public class EtcdSetRequest extends AbstractEtcdRequest {
 
 	private int httpRequestType;
+
 	@Override
 	public int getHttpRequestType() {
 		return httpRequestType;

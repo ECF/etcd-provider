@@ -25,9 +25,9 @@ public class EtcdNode {
 	public static final String MODIFIEDINDEX_KEY = "modifiedIndex"; //$NON-NLS-1$
 	public static final String EXPIRATION_KEY = "expiration"; //$NON-NLS-1$
 	public static final String NODES_KEY = "nodes"; //$NON-NLS-1$
-	public static final String TTL_KEY ="ttl"; //$NON-NLS-1$
+	public static final String TTL_KEY = "ttl"; //$NON-NLS-1$
 	public static final String VALUE_KEY = "value"; //$NON-NLS-1$
-	
+
 	private final int createdIndex;
 	private final boolean directory;
 	private final String expiration;
@@ -35,20 +35,20 @@ public class EtcdNode {
 	private final int modifiedIndex;
 	private final Integer ttl;
 	private final String value;
-	
+
 	private final EtcdNode[] nodes;
-	
+
 	private EtcdNode[] createNodes(JSONObject jsonObject) throws JSONException {
 		JSONArray array = jsonObject.optJSONArray(NODES_KEY);
 		if (array != null) {
 			List<EtcdNode> nodes = new ArrayList<EtcdNode>();
-			for(int i=0; i < array.length(); i++) 
+			for (int i = 0; i < array.length(); i++)
 				nodes.add(new EtcdNode(array.getJSONObject(i)));
-			 return nodes.toArray(new EtcdNode[nodes.size()]);
+			return nodes.toArray(new EtcdNode[nodes.size()]);
 		} else
 			return null;
 	}
-	
+
 	public EtcdNode(JSONObject jsonObject) throws JSONException {
 		Assert.isNotNull(jsonObject);
 		this.createdIndex = jsonObject.getInt(CREATEDINDEX_KEY);
