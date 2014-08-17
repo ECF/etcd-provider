@@ -11,26 +11,18 @@ package org.eclipse.ecf.provider.etcd;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-
-import org.json.JSONException;
 
 public abstract class AbstractEtcdProtocol {
+
+	public static final int READ_TIMEOUT = Integer.parseInt(System.getProperty(
+			"org.eclipse.ecf.provider.etcd.readtimeout", "10000")); //$NON-NLS-1$ //$NON-NLS-2$
+	public static final int CONNECT_TIMEOUT = Integer.parseInt(System
+			.getProperty(
+					"org.eclipse.ecf.provider.etcd.connecttimeout", "15000")); //$NON-NLS-1$ //$NON-NLS-2$
 
 	public static final String ACTION_KEY = "action"; //$NON-NLS-1$
 	public static final String NODE_KEY = "node"; //$NON-NLS-1$
 	public static final String PREVIOUSNODE_KEY = "prevNode"; //$NON-NLS-1$
-
-	protected AbstractEtcdResponse getResponseOrError(HttpURLConnection conn)
-			throws IOException, JSONException {
-		try {
-			return new EtcdResponse(readStream(conn.getInputStream()),
-					conn.getHeaderFields());
-		} catch (IOException e) {
-			return new EtcdError(readStream(conn.getErrorStream()),
-					conn.getHeaderFields());
-		}
-	}
 
 	protected String readStream(InputStream ins) throws IOException {
 		try {

@@ -8,10 +8,13 @@ import org.eclipse.ecf.discovery.IDiscoveryLocator;
 import org.eclipse.ecf.discovery.IServiceProperties;
 import org.eclipse.ecf.discovery.identity.IServiceID;
 import org.eclipse.ecf.provider.etcd.AbstractEtcdResponse;
+import org.eclipse.ecf.provider.etcd.EtcdDeleteRequest;
 import org.eclipse.ecf.provider.etcd.EtcdDiscoveryContainerInstantiator;
-import org.eclipse.ecf.provider.etcd.EtcdException;
 import org.eclipse.ecf.provider.etcd.EtcdGetRequest;
+import org.eclipse.ecf.provider.etcd.EtcdNode;
+import org.eclipse.ecf.provider.etcd.EtcdResponse;
 import org.eclipse.ecf.provider.etcd.EtcdServiceInfo;
+import org.eclipse.ecf.provider.etcd.EtcdSetRequest;
 import org.eclipse.ecf.provider.etcd.identity.EtcdNamespace;
 import org.eclipse.ecf.tests.discovery.AbstractDiscoveryTest;
 import org.eclipse.ecf.tests.discovery.Activator;
@@ -56,29 +59,12 @@ public class DiscoveryTest extends AbstractDiscoveryTest {
 	 * null); assertNotNull(resp); }
 	 */
 
-	public void testGetRequestError() throws Exception {
-		String url = "http://composent.com:4001/v2/keys/foo";
-		EtcdGetRequest request = new EtcdGetRequest(url);
-		AbstractEtcdResponse response = request.execute();
-		assertTrue(response.isError());
-	}
-
-	protected AbstractEtcdResponse doGetRequest(String url)
-			throws EtcdException {
-		return doGetRequest(url, false);
-	}
-
-	protected AbstractEtcdResponse doGetRequest(String url, boolean recursive)
-			throws EtcdException {
-		return new EtcdGetRequest(url, recursive).execute();
-	}
-
 	public static final String TEST_HOST = System.getProperty("etcd.test.host",
 			"composent.com");
 	public static final String TEST_PORT = System.getProperty("ectd.test.port",
 			"4001");
 	public static final String TEST_URL_BASE = System.getProperty(
-			"etcd.test.url", "http://" + TEST_HOST + ":" + TEST_PORT
+			"etcd.test.getdirurl", "http://" + TEST_HOST + ":" + TEST_PORT
 					+ "/v2/keys/");
 
 	public static final String GET_SUCCEED = TEST_URL_BASE;
@@ -86,9 +72,13 @@ public class DiscoveryTest extends AbstractDiscoveryTest {
 			"ectd.test.fail.url", "http://" + TEST_HOST + ":" + TEST_PORT
 					+ "/v2/keys/" + System.currentTimeMillis());
 
+	public static final String SET_SUCCEED = GET_SUCCEED
+			+ DiscoveryTest.class.getName();
+
 	public void testGetRequestSucceed() throws Exception {
 		System.out.println("testGetRequestSucceed(" + GET_SUCCEED + ")");
-		AbstractEtcdResponse response = doGetRequest(GET_SUCCEED);
+		AbstractEtcdResponse response = new EtcdGetRequest(GET_SUCCEED, false)
+				.execute();
 		assertFalse(response.isError());
 		System.out.println("testGetRequestSucceed(response="
 				+ response.getResponse() + ")");
@@ -97,9 +87,59 @@ public class DiscoveryTest extends AbstractDiscoveryTest {
 	public void testGetRequestSucceedRecursive() throws Exception {
 		System.out.println("testGetRequestSucceedRecursive(" + GET_SUCCEED
 				+ ")");
-		AbstractEtcdResponse response = doGetRequest(GET_SUCCEED, true);
+		AbstractEtcdResponse response = new EtcdGetRequest(GET_SUCCEED, true)
+				.execute();
 		assertFalse(response.isError());
 		System.out.println("testGetRequestSucceedRecursive(response="
+				+ response.getResponse() + ")");
+	}
+
+	public void testGetRequestError() throws Exception {
+		String url = "http://composent.com:4001/v2/keys/foo";
+		EtcdGetRequest request = new EtcdGetRequest(url);
+		AbstractEtcdResponse response = request.execute();
+		assertTrue(response.isError());
+	}
+
+
+	public void testCreateSucceed() throws Exception {
+		System.out.println("testCreateSucceed(" + SET_SUCCEED + ")");
+		AbstractEtcdResponse response = new EtcdSetRequest(SET_SUCCEED,
+				"hello this is new value").execute();
+		assertFalse(response.isError());
+		System.out.println("testCreateSucceed(response="
+				+ response.getResponse() + ")");
+	}
+
+	public void testDelete() throws Exception {
+		System.out.println("testDelete(" + SETDIR_SUCCEED + ")");
+		AbstractEtcdResponse response = new EtcdGetRequest(GET_SUCCEED, true)
+				.execute();
+		assertFalse(response.isError());
+		EtcdResponse r = response.getResponse();
+		EtcdNode node = r.getNode();
+		assertNotNull(node);
+		for (EtcdNode n : node.getNodes()) {
+			System.out.println("deleting node with key="+n.getKey()+", isDir="+n.isDirectory()+", value="+n.getValue());
+			AbstractEtcdResponse resp = null;
+			if (n.isDirectory()) {
+				resp = new EtcdDeleteRequest(GET_SUCCEED + n.getKey(), true).execute();
+			} else {
+				resp = new EtcdDeleteRequest(GET_SUCCEED + n.getKey()).execute();
+			}
+			assertNotNull(resp);
+			System.out.println("node delete resp="+resp);
+		}
+	}
+
+	public static final String SETDIR_SUCCEED = GET_SUCCEED;
+
+	public void testCreateDirSucceed() throws Exception {
+		System.out.println("testCreateDirSucceed(" + SETDIR_SUCCEED + ")");
+		AbstractEtcdResponse response = new EtcdSetRequest(SETDIR_SUCCEED +
+				String.valueOf(System.currentTimeMillis())).execute();
+		assertFalse(response.isError());
+		System.out.println("testCreateDirSucceed(response="
 				+ response.getResponse() + ")");
 	}
 

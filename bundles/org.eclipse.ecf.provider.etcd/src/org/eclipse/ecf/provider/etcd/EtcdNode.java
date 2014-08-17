@@ -100,7 +100,7 @@ public class EtcdNode {
 
 	@Override
 	public String toString() {
-		return "EtcdNode [createdIndex=" + createdIndex + ", directory=" //$NON-NLS-1$ //$NON-NLS-2$
+		return "EtcdNode[createdIndex=" + createdIndex + ", directory=" //$NON-NLS-1$ //$NON-NLS-2$
 				+ directory + ", expiration=" + expiration + ", key=" + key //$NON-NLS-1$ //$NON-NLS-2$
 				+ ", modifiedIndex=" + modifiedIndex + ", ttl=" + ttl //$NON-NLS-1$ //$NON-NLS-2$
 				+ ", value=" + value + ", nodes=" + Arrays.toString(nodes) //$NON-NLS-1$ //$NON-NLS-2$
