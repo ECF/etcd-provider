@@ -6,7 +6,7 @@
  * 
  * Contributors: Scott Lewis - initial API and implementation
  ******************************************************************************/
-package org.eclipse.ecf.provider.etcd;
+package org.eclipse.ecf.provider.etcd.protocol;
 
 import java.util.ArrayList;
 import java.util.Arrays;

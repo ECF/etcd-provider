@@ -23,5 +23,6 @@ Import-Package: org.eclipse.ecf.core;version="3.0.0",
  org.osgi.util.tracker;version="1.5.1"
 Export-Package: org.eclipse.ecf.internal.provider.etcd;x-internal:=true,
  org.eclipse.ecf.provider.etcd,
- org.eclipse.ecf.provider.etcd.identity
+ org.eclipse.ecf.provider.etcd.identity,
+ org.eclipse.ecf.provider.etcd.protocol
 Require-Bundle: org.eclipse.equinox.common

@@ -6,7 +6,7 @@
  * 
  * Contributors: Scott Lewis - initial API and implementation
  ******************************************************************************/
-package org.eclipse.ecf.provider.etcd;
+package org.eclipse.ecf.provider.etcd.protocol;
 
 /*******************************************************************************
  * Copyright (c) 2014 Composent, Inc. All rights reserved. This
@@ -23,7 +23,7 @@ import org.eclipse.core.runtime.Assert;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class EtcdResponse extends AbstractEtcdResponse {
+public class EtcdSuccessResponse extends EtcdResponse {
 
 	private Map<String, List<String>> responseHeaders;
 
@@ -31,7 +31,7 @@ public class EtcdResponse extends AbstractEtcdResponse {
 	private final EtcdNode etcdNode;
 	private final EtcdNode previousNode;
 
-	public EtcdResponse(String json, Map<String, List<String>> headers)
+	public EtcdSuccessResponse(String json, Map<String, List<String>> headers)
 			throws JSONException {
 		JSONObject jsonObject = new JSONObject(json);
 		this.action = jsonObject.getString(ACTION_KEY);
@@ -61,7 +61,7 @@ public class EtcdResponse extends AbstractEtcdResponse {
 
 	@Override
 	public String toString() {
-		return "EtcdResponse[action=" //$NON-NLS-1$
+		return "EtcdSuccessResponse[action=" //$NON-NLS-1$
 				+ action + ", etcdNode=" + etcdNode + ", previousNode=" //$NON-NLS-1$ //$NON-NLS-2$
 				+ previousNode + ", responseHeaders=" + responseHeaders + "]"; //$NON-NLS-1$ //$NON-NLS-2$
 	}
@@ -72,12 +72,12 @@ public class EtcdResponse extends AbstractEtcdResponse {
 	}
 
 	@Override
-	public EtcdResponse getResponse() {
+	public EtcdSuccessResponse getResponse() {
 		return this;
 	}
 
 	@Override
-	public EtcdError getError() {
+	public EtcdErrorResponse getError() {
 		return null;
 	}
 

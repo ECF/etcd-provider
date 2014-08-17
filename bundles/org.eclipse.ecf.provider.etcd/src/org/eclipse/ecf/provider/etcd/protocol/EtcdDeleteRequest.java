@@ -1,4 +1,4 @@
-package org.eclipse.ecf.provider.etcd;
+package org.eclipse.ecf.provider.etcd.protocol;
 
 import java.net.HttpURLConnection;
 import java.net.ProtocolException;

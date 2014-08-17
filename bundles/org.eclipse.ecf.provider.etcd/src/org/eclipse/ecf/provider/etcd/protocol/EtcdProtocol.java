@@ -6,13 +6,13 @@
  * 
  * Contributors: Scott Lewis - initial API and implementation
  ******************************************************************************/
-package org.eclipse.ecf.provider.etcd;
+package org.eclipse.ecf.provider.etcd.protocol;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public abstract class AbstractEtcdProtocol {
+public abstract class EtcdProtocol {
 
 	public static final int READ_TIMEOUT = Integer.parseInt(System.getProperty(
 			"org.eclipse.ecf.provider.etcd.readtimeout", "10000")); //$NON-NLS-1$ //$NON-NLS-2$

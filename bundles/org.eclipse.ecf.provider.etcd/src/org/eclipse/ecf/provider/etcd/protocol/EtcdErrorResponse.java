@@ -1,4 +1,4 @@
-package org.eclipse.ecf.provider.etcd;
+package org.eclipse.ecf.provider.etcd.protocol;
 
 import java.util.List;
 import java.util.Map;
@@ -6,7 +6,7 @@ import java.util.Map;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class EtcdError extends AbstractEtcdResponse {
+public class EtcdErrorResponse extends EtcdResponse {
 
 	public static final String CAUSE_KEY = "cause"; //$NON-NLS-1$
 	public static final String ERRORCODE_KEY = "errorCode"; //$NON-NLS-1$
@@ -20,7 +20,7 @@ public class EtcdError extends AbstractEtcdResponse {
 	private final int index;
 	private final String message;
 
-	public EtcdError(String json, Map<String, List<String>> headers)
+	public EtcdErrorResponse(String json, Map<String, List<String>> headers)
 			throws JSONException {
 		JSONObject jsonObject = new JSONObject(json);
 		this.cause = jsonObject.getString(CAUSE_KEY);
@@ -52,7 +52,7 @@ public class EtcdError extends AbstractEtcdResponse {
 
 	@Override
 	public String toString() {
-		return "EtcdError[cause=" //$NON-NLS-1$
+		return "EtcdErrorResponse[cause=" //$NON-NLS-1$
 				+ cause
 				+ ", errorCode=" + errorCode + ", index=" + index //$NON-NLS-1$ //$NON-NLS-2$
 				+ ", message=" + message + ", responseHeaders=" + responseHeaders + "]"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -64,12 +64,12 @@ public class EtcdError extends AbstractEtcdResponse {
 	}
 
 	@Override
-	public EtcdResponse getResponse() {
+	public EtcdSuccessResponse getResponse() {
 		return null;
 	}
 
 	@Override
-	public EtcdError getError() {
+	public EtcdErrorResponse getError() {
 		return this;
 	}
 

@@ -6,14 +6,15 @@
  * 
  * Contributors: Scott Lewis - initial API and implementation
  ******************************************************************************/
-package org.eclipse.ecf.provider.etcd;
+package org.eclipse.ecf.provider.etcd.protocol;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 
+import org.eclipse.ecf.provider.etcd.EtcdException;
 import org.json.JSONException;
 
-public class EtcdGetRequest extends AbstractEtcdRequest {
+public class EtcdGetRequest extends EtcdRequest {
 
 	private final Boolean recursive;
 
@@ -28,7 +29,7 @@ public class EtcdGetRequest extends AbstractEtcdRequest {
 	}
 
 	@Override
-	public AbstractEtcdResponse execute() throws EtcdException {
+	public EtcdResponse execute() throws EtcdException {
 		String u = getUrl();
 		if (u.endsWith("/")) { //$NON-NLS-1$
 			// directory so if recursive is set then we add on
@@ -48,7 +49,7 @@ public class EtcdGetRequest extends AbstractEtcdRequest {
 	}
 
 	@Override
-	protected AbstractEtcdResponse doRequest(HttpURLConnection conn)
+	protected EtcdResponse doRequest(HttpURLConnection conn)
 			throws IOException, JSONException {
 		return getResponseOrError(conn);
 	}

@@ -6,12 +6,12 @@
  * 
  * Contributors: Scott Lewis - initial API and implementation
  ******************************************************************************/
-package org.eclipse.ecf.provider.etcd;
+package org.eclipse.ecf.provider.etcd.protocol;
 
-public abstract class AbstractEtcdResponse extends AbstractEtcdProtocol {
+public abstract class EtcdResponse extends EtcdProtocol {
 	public abstract boolean isError();
 
-	public abstract EtcdResponse getResponse();
+	public abstract EtcdSuccessResponse getResponse();
 
-	public abstract EtcdError getError();
+	public abstract EtcdErrorResponse getError();
 }

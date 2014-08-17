@@ -6,16 +6,17 @@
  * 
  * Contributors: Scott Lewis - initial API and implementation
  ******************************************************************************/
-package org.eclipse.ecf.provider.etcd;
+package org.eclipse.ecf.provider.etcd.protocol;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.eclipse.ecf.provider.etcd.EtcdException;
 import org.json.JSONException;
 
-public abstract class AbstractEtcdRequest extends AbstractEtcdProtocol {
+public abstract class EtcdRequest extends EtcdProtocol {
 
 	public static final int GET = 0x00;
 	public static final int PUT = 0x10;
@@ -29,7 +30,7 @@ public abstract class AbstractEtcdRequest extends AbstractEtcdProtocol {
 
 	protected String url;
 
-	public AbstractEtcdRequest(String url) {
+	public EtcdRequest(String url) {
 		this.url = url;
 	}
 
@@ -37,21 +38,21 @@ public abstract class AbstractEtcdRequest extends AbstractEtcdProtocol {
 		return url;
 	}
 
-	protected AbstractEtcdResponse getResponseOrError(HttpURLConnection conn)
+	protected EtcdResponse getResponseOrError(HttpURLConnection conn)
 			throws IOException, JSONException {
 		try {
-			return new EtcdResponse(readStream(conn.getInputStream()),
+			return new EtcdSuccessResponse(readStream(conn.getInputStream()),
 					conn.getHeaderFields());
 		} catch (IOException e) {
-			return new EtcdError(readStream(conn.getErrorStream()),
+			return new EtcdErrorResponse(readStream(conn.getErrorStream()),
 					conn.getHeaderFields());
 		}
 	}
 
-	protected abstract AbstractEtcdResponse doRequest(HttpURLConnection conn)
+	protected abstract EtcdResponse doRequest(HttpURLConnection conn)
 			throws IOException, JSONException;
 
-	public AbstractEtcdResponse execute() throws EtcdException {
+	public EtcdResponse execute() throws EtcdException {
 		HttpURLConnection conn = null;
 		try {
 			URL url = new URL(getUrl());

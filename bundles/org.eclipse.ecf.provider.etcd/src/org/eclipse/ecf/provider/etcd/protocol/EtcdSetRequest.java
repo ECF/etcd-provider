@@ -6,7 +6,7 @@
  * 
  * Contributors: Scott Lewis - initial API and implementation
  ******************************************************************************/
-package org.eclipse.ecf.provider.etcd;
+package org.eclipse.ecf.provider.etcd.protocol;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -19,7 +19,7 @@ import java.util.Map;
 
 import org.json.JSONException;
 
-public class EtcdSetRequest extends AbstractEtcdRequest {
+public class EtcdSetRequest extends EtcdRequest {
 
 	private static final String CONTENT_TYPE_VALUE = "application/x-www-form-urlencoded"; //$NON-NLS-1$
 	private static final String CONTENT_TYPE = "Content-Type"; //$NON-NLS-1$
@@ -97,7 +97,7 @@ public class EtcdSetRequest extends AbstractEtcdRequest {
 	}
 
 	@Override
-	protected AbstractEtcdResponse doRequest(HttpURLConnection conn)
+	protected EtcdResponse doRequest(HttpURLConnection conn)
 			throws IOException, JSONException {
 		conn.setDoOutput(true);
 		setRequestMethod(conn);
