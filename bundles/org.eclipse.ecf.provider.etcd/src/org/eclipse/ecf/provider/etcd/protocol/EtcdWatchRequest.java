@@ -11,14 +11,14 @@ package org.eclipse.ecf.provider.etcd.protocol;
 public class EtcdWatchRequest extends EtcdGetRequest {
 
 	public EtcdWatchRequest(String url) {
-		this(url, 0);
+		this(url, null);
 	}
 
-	public EtcdWatchRequest(String url, int waitIndex) {
+	public EtcdWatchRequest(String url, String waitIndex) {
 		super(url);
-		this.url = this.url + "?wait=true"; //$NON-NLS-1$
-		if (waitIndex > 0)
-			this.url = this.url + "&waitIndex=" + String.valueOf(waitIndex); //$NON-NLS-1$
+		setQueryBoolean(WAIT);
+		if (waitIndex != null)
+			setQueryParam(WAITINDEX, waitIndex);
 	}
 
 }

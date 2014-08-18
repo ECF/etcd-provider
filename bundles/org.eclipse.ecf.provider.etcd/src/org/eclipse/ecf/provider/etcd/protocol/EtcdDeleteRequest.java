@@ -12,16 +12,17 @@ public class EtcdDeleteRequest extends EtcdSetRequest {
 	public EtcdDeleteRequest(String directoryURL, boolean recursive) {
 		super(directoryURL);
 		if (recursive)
-			this.url = this.url + "?" + RECURSIVE + "=true"; //$NON-NLS-1$ //$NON-NLS-2$
+			setQueryBoolean(RECURSIVE);
 		else
-			this.url = this.url + "?" + DIR + "=true"; //$NON-NLS-1$ //$NON-NLS-2$
+			setQueryBoolean(DIR);
 		if (this.params != null)
 			this.params.clear();
 	}
 
-	protected void setRequestMethod(HttpURLConnection conn)
+	protected HttpURLConnection setRequestMethod(HttpURLConnection conn)
 			throws ProtocolException {
 		conn.setRequestMethod("DELETE"); //$NON-NLS-1$
+		return conn;
 	}
 
 }

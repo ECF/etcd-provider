@@ -9,9 +9,14 @@
 package org.eclipse.ecf.provider.etcd.protocol;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.eclipse.ecf.provider.etcd.EtcdException;
 import org.json.JSONException;
@@ -27,15 +32,31 @@ public abstract class EtcdRequest extends EtcdProtocol {
 	public static final String TTL = "ttl"; //$NON-NLS-1$
 	public static final String PREVEXIST = "prevExist"; //$NON-NLS-1$
 	public static final String RECURSIVE = "recursive"; //$NON-NLS-1$
+	public static final String WAIT = "wait"; //$NON-NLS-1$
+	public static final String WAITINDEX = "waitIndex"; //$NON-NLS-1$
 
-	protected String url;
+	private final String url;
+	private final Map<String, String> queryParams;
 
 	public EtcdRequest(String url) {
 		this.url = url;
+		queryParams = new HashMap<String, String>();
 	}
 
 	public String getUrl() {
 		return url;
+	}
+
+	public Map<String, String> getQueryParams() {
+		return queryParams;
+	}
+
+	public void setQueryParam(String name, String value) {
+		getQueryParams().put(name, value);
+	}
+
+	public void setQueryBoolean(String name) {
+		setQueryParam(name, String.valueOf(true));
 	}
 
 	protected EtcdResponse getResponseOrError(HttpURLConnection conn)
@@ -49,19 +70,52 @@ public abstract class EtcdRequest extends EtcdProtocol {
 		}
 	}
 
-	protected abstract EtcdResponse doRequest(HttpURLConnection conn)
-			throws IOException, JSONException;
+	protected HttpURLConnection setRequestMethod(HttpURLConnection conn)
+			throws ProtocolException, IOException {
+		// by default do nothing and default is GET
+		return conn;
+	}
+
+	protected String getQueryAsString(Map<String, String> params) {
+		StringBuffer buf = new StringBuffer();
+		int queryParamCount = 0;
+		for (String qkey : queryParams.keySet()) {
+			if (queryParamCount++ == 0)
+				buf.append('?');
+			else
+				buf.append('&');
+			try {
+				buf.append(URLEncoder.encode(qkey, "UTF-8")).append('=').append(URLEncoder.encode(queryParams.get(qkey), "UTF-8")); //$NON-NLS-1$ //$NON-NLS-2$
+			} catch (UnsupportedEncodingException e) {
+				// should never happen
+			}
+		}
+		return buf.toString();
+	}
+
+	protected String getUrlWithQuery() {
+		return new StringBuffer(getUrl()).append(
+				getQueryAsString(getQueryParams())).toString();
+	}
+
+	protected HttpURLConnection setConnectionOptions(HttpURLConnection conn)
+			throws IOException {
+		conn.setReadTimeout(READ_TIMEOUT);
+		conn.setConnectTimeout(CONNECT_TIMEOUT);
+		return conn;
+	}
 
 	public EtcdResponse execute() throws EtcdException {
 		HttpURLConnection conn = null;
 		try {
-			URL url = new URL(getUrl());
+			// Create url (with any query parameters)
+			URL url = new URL(getUrlWithQuery());
 			String protocol = url.getProtocol();
 			if (!("http".equals(protocol) || "https".equals(protocol)))throw new IOException("url=" + url + " not http protocol"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 			conn = (HttpURLConnection) url.openConnection();
-			conn.setReadTimeout(READ_TIMEOUT);
-			conn.setConnectTimeout(CONNECT_TIMEOUT);
-			return doRequest(conn);
+			setConnectionOptions(conn);
+			setRequestMethod(conn);
+			return getResponseOrError(conn);
 		} catch (MalformedURLException e) {
 			throw new EtcdException("Url " + getUrl() + " is malformed", e); //$NON-NLS-1$ //$NON-NLS-2$
 		} catch (IOException e) {

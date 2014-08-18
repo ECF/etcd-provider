@@ -11,18 +11,15 @@ package org.eclipse.ecf.provider.etcd.protocol;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.ProtocolException;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.json.JSONException;
 
 public class EtcdSetRequest extends EtcdRequest {
 
 	private static final String CONTENT_TYPE_VALUE = "application/x-www-form-urlencoded"; //$NON-NLS-1$
 	private static final String CONTENT_TYPE = "Content-Type"; //$NON-NLS-1$
+
 	protected Map<String, String> params;
 
 	public EtcdSetRequest(String url, Map<String, String> params) {
@@ -73,35 +70,18 @@ public class EtcdSetRequest extends EtcdRequest {
 		this(directoryURL, 0);
 	}
 
-	private String getQueryAsString(Map<String, String> params)
-			throws UnsupportedEncodingException {
-		StringBuilder result = new StringBuilder();
-		boolean first = true;
-
-		for (String paramName : params.keySet()) {
-			if (first)
-				first = false;
-			else
-				result.append("&"); //$NON-NLS-1$
-
-			result.append(paramName);
-			result.append("="); //$NON-NLS-1$
-			result.append(params.get(paramName));
-		}
-		return result.toString();
-	}
-
-	protected void setRequestMethod(HttpURLConnection conn)
-			throws ProtocolException {
-		conn.setRequestMethod("PUT"); //$NON-NLS-1$
-	}
-
 	@Override
-	protected EtcdResponse doRequest(HttpURLConnection conn)
-			throws IOException, JSONException {
-		conn.setDoOutput(true);
-		setRequestMethod(conn);
+	protected HttpURLConnection setConnectionOptions(HttpURLConnection conn)
+			throws IOException {
+		HttpURLConnection c = super.setConnectionOptions(conn);
+		c.setDoOutput(true);
 		conn.setRequestProperty(CONTENT_TYPE, CONTENT_TYPE_VALUE);
+		return conn;
+	}
+
+	protected HttpURLConnection setRequestMethod(HttpURLConnection conn)
+			throws IOException {
+		conn.setRequestMethod("PUT"); //$NON-NLS-1$
 		Map<String, String> params = getParams();
 		if (params != null && params.size() > 0) {
 			OutputStream os = conn.getOutputStream();
@@ -110,8 +90,7 @@ public class EtcdSetRequest extends EtcdRequest {
 			writer.close();
 			os.close();
 		}
-		conn.connect();
-		return getResponseOrError(conn);
+		return conn;
 	}
 
 }

@@ -16,6 +16,7 @@ import org.eclipse.ecf.provider.etcd.protocol.EtcdNode;
 import org.eclipse.ecf.provider.etcd.protocol.EtcdResponse;
 import org.eclipse.ecf.provider.etcd.protocol.EtcdSetRequest;
 import org.eclipse.ecf.provider.etcd.protocol.EtcdSuccessResponse;
+import org.eclipse.ecf.provider.etcd.protocol.EtcdWatchRequest;
 import org.eclipse.ecf.tests.discovery.AbstractDiscoveryTest;
 import org.eclipse.ecf.tests.discovery.Activator;
 
@@ -60,7 +61,7 @@ public class DiscoveryTest extends AbstractDiscoveryTest {
 	 */
 
 	public static final String TEST_HOST = System.getProperty("etcd.test.host",
-			"composent.com");
+			"120.0.0.1");
 	public static final String TEST_PORT = System.getProperty("ectd.test.port",
 			"4001");
 	public static final String TEST_URL_BASE = System.getProperty(
@@ -132,6 +133,18 @@ public class DiscoveryTest extends AbstractDiscoveryTest {
 		}
 	}
 
+	/*
+	public void testWatchDir() throws Exception {
+		System.out.println("testWatchDir()");
+		// Create directory
+		String dir = TEST_URL_BASE+"testdir";
+		EtcdResponse response = new EtcdSetRequest(dir).execute();
+		System.out.println(response);
+		// Now watch
+		response = new EtcdWatchRequest(dir).execute();
+		System.out.println(response);
+	}
+*/
 	public static final String SETDIR_SUCCEED = GET_SUCCEED;
 
 	public void testCreateDirSucceed() throws Exception {
