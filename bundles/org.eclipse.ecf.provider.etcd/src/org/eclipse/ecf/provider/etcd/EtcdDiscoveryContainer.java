@@ -30,6 +30,10 @@ import org.eclipse.ecf.discovery.identity.IServiceID;
 import org.eclipse.ecf.discovery.identity.IServiceTypeID;
 import org.eclipse.ecf.provider.etcd.identity.EtcdNamespace;
 import org.eclipse.ecf.provider.etcd.identity.EtcdServiceID;
+import org.eclipse.ecf.provider.etcd.protocol.EtcdException;
+import org.eclipse.ecf.provider.etcd.protocol.EtcdGetRequest;
+import org.eclipse.ecf.provider.etcd.protocol.EtcdResponse;
+import org.eclipse.ecf.provider.etcd.protocol.EtcdSetRequest;
 
 public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 
@@ -92,11 +96,18 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 		return EtcdDiscoveryContainerInstantiator.NAME;
 	}
 
+	protected void trace(String method, String message) {
+		// XXX todo
+		System.out.println(method+":"+message); //$NON-NLS-1$
+	}
+	
 	public void connect(ID aTargetID, IConnectContext connectContext)
 			throws ContainerConnectException {
 		if (targetID != null) {
 			throw new ContainerConnectException("Already connected"); //$NON-NLS-1$
 		}
+		fireContainerEvent(new ContainerConnectingEvent(this.getID(),
+				aTargetID, connectContext));
 		EtcdDiscoveryContainerConfig config = (EtcdDiscoveryContainerConfig) getConfig();
 		if (config == null) {
 			throw new ContainerConnectException("Container has been disposed"); //$NON-NLS-1$
@@ -109,10 +120,41 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 						"targetID must be of type EtcdServiceID"); //$NON-NLS-1$
 			targetID = (EtcdServiceID) aTargetID;
 		}
-		fireContainerEvent(new ContainerConnectingEvent(this.getID(),
-				aTargetID, connectContext));
+		doConnect();
 		fireContainerEvent(new ContainerConnectedEvent(this.getID(), aTargetID));
-		startDiscoveryJob();
+	}
+	
+	protected EtcdServiceID getTargetID() {
+		return targetID;
+	}
+
+	protected String getEtcdDirectoryURL() throws ContainerConnectException {
+		String urlPrefix = getTargetID().getLocation().toString();
+		// Make sure that the targetID has '/' suffix
+		if (!urlPrefix.endsWith("/")) //$NON-NLS-1$
+			urlPrefix = urlPrefix + "/"; //$NON-NLS-1$
+		return urlPrefix + getID().getName();
+	}
+	
+	private void doConnect() throws ContainerConnectException {
+		String directoryURL = getEtcdDirectoryURL();
+		try {
+			trace("doConnect","checking for etcd directoryURL="+directoryURL);  //$NON-NLS-1$//$NON-NLS-2$
+			EtcdResponse directoryExistsResponse = new EtcdGetRequest(getEtcdDirectoryURL(),false).execute();
+			if (directoryExistsResponse.isError()) {
+				trace("doConnect","etcd directoryURL="+directoryURL+" does not exist, attempting to create");  //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
+				// Try to create directory
+				directoryExistsResponse = new EtcdSetRequest(directoryURL).execute();
+				if (directoryExistsResponse.isError()) {
+					trace("doConnect ERROR","etcd directoryURL could not be created, throwing"); //$NON-NLS-1$ //$NON-NLS-2$
+					throw new ContainerConnectException("Could not create etcd directoryURL="+directoryURL); //$NON-NLS-1$
+				}
+			}
+			// Else the directory already exists or was successfully created
+			trace("doConnect","Directory exists="+directoryURL); //$NON-NLS-1$ //$NON-NLS-2$
+		} catch (EtcdException e) {
+			throw new ContainerConnectException("Exception communicating with etcd service at directoryURL="+directoryURL,e);
+		}
 	}
 
 	private void startDiscoveryJob() {

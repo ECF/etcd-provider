@@ -60,8 +60,8 @@ public class DiscoveryTest extends AbstractDiscoveryTest {
 	 * null); assertNotNull(resp); }
 	 */
 
-	public static final String TEST_HOST = System.getProperty("etcd.test.host",
-			"120.0.0.1");
+	public static final String TEST_HOST = System.getProperty("etcd.test.hostname",
+			"composent.com");
 	public static final String TEST_PORT = System.getProperty("ectd.test.port",
 			"4001");
 	public static final String TEST_URL_BASE = System.getProperty(

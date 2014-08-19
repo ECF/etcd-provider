@@ -18,7 +18,6 @@ import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.ecf.provider.etcd.EtcdException;
 import org.json.JSONException;
 
 public abstract class EtcdRequest extends EtcdProtocol {

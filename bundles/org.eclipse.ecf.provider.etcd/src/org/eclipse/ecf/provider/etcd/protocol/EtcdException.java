@@ -6,7 +6,7 @@
  * 
  * Contributors: Scott Lewis - initial API and implementation
  ******************************************************************************/
-package org.eclipse.ecf.provider.etcd;
+package org.eclipse.ecf.provider.etcd.protocol;
 
 public class EtcdException extends Exception {
 
