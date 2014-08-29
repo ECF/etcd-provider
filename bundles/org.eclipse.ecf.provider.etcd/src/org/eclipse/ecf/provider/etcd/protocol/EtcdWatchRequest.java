@@ -8,6 +8,9 @@
  ******************************************************************************/
 package org.eclipse.ecf.provider.etcd.protocol;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+
 public class EtcdWatchRequest extends EtcdGetRequest {
 
 	public EtcdWatchRequest(String url) {
@@ -15,10 +18,23 @@ public class EtcdWatchRequest extends EtcdGetRequest {
 	}
 
 	public EtcdWatchRequest(String url, String waitIndex) {
+		this(url, waitIndex, true);
+	}
+
+	public EtcdWatchRequest(String url, String waitIndex, boolean recursive) {
 		super(url);
 		setQueryBoolean(WAIT);
 		if (waitIndex != null)
 			setQueryParam(WAITINDEX, waitIndex);
+		if (recursive)
+			setQueryBoolean(RECURSIVE);
+	}
+
+	protected HttpURLConnection setConnectionOptions(HttpURLConnection conn)
+			throws IOException {
+		conn.setReadTimeout(0);
+		conn.setConnectTimeout(CONNECT_TIMEOUT);
+		return conn;
 	}
 
 }

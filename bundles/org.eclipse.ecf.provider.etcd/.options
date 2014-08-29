@@ -1,0 +1,15 @@
+# Debugging options for the org.eclipse.ecf.provider.etcd plug-in
+
+# Turn on general debugging for the org.eclipse.ecf.provider.etcd plug-in
+org.eclipse.ecf.provider.etcd/debug=true
+org.eclipse.ecf.provider.etcd/debug/filter = *
+org.eclipse.ecf.provider.etcd/debug/flag = true
+
+# Trace when exceptions are caught
+org.eclipse.ecf.provider.etcd/debug/exceptions/catching=true
+# Trace when exceptions are thrown
+org.eclipse.ecf.provider.etcd/debug/exceptions/throwing=true
+
+org.eclipse.ecf.provider.etcd/debug/protocol=true
+
+org.eclipse.ecf.provider.etcd/debug/watchjob=true

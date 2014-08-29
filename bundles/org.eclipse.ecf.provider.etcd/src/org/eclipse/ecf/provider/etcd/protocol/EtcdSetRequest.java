@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
-import java.util.HashMap;
 import java.util.Map;
 
 public class EtcdSetRequest extends EtcdRequest {
@@ -20,23 +19,18 @@ public class EtcdSetRequest extends EtcdRequest {
 	private static final String CONTENT_TYPE_VALUE = "application/x-www-form-urlencoded"; //$NON-NLS-1$
 	private static final String CONTENT_TYPE = "Content-Type"; //$NON-NLS-1$
 
-	protected Map<String, String> params;
-
 	public EtcdSetRequest(String url, Map<String, String> params) {
 		super(url);
-		this.params = params;
 	}
 
 	public EtcdSetRequest(String url, String value, int ttl, boolean prevExist) {
 		super(url);
-		Map<String, String> map = new HashMap<String, String>();
 		if (value != null)
-			map.put(VALUE, value);
+			setQueryParam(VALUE, value);
 		if (ttl > 0)
-			map.put(TTL, String.valueOf(ttl));
+			setQueryParam(TTL, String.valueOf(ttl));
 		if (prevExist)
-			map.put(PREVEXIST, String.valueOf(true));
-		this.params = map;
+			setQueryParam(PREVEXIST, String.valueOf(true));
 	}
 
 	public EtcdSetRequest(String url, String value, int ttl) {
@@ -47,19 +41,13 @@ public class EtcdSetRequest extends EtcdRequest {
 		this(url, value, 0);
 	}
 
-	public Map<String, String> getParams() {
-		return params;
-	}
-
 	public EtcdSetRequest(String directoryURL, int ttl, boolean prevExist) {
 		super(directoryURL);
-		Map<String, String> map = new HashMap<String, String>();
-		map.put(DIR, String.valueOf(true));
+		setQueryParam(DIR, String.valueOf(true));
 		if (ttl > 0)
-			map.put(TTL, String.valueOf(ttl));
+			setQueryParam(TTL, String.valueOf(ttl));
 		if (prevExist)
-			map.put(PREVEXIST, String.valueOf(true));
-		this.params = map;
+			setQueryParam(PREVEXIST, String.valueOf(true));
 	}
 
 	public EtcdSetRequest(String directoryURL, int ttl) {
@@ -82,7 +70,7 @@ public class EtcdSetRequest extends EtcdRequest {
 	protected HttpURLConnection setRequestMethod(HttpURLConnection conn)
 			throws IOException {
 		conn.setRequestMethod("PUT"); //$NON-NLS-1$
-		Map<String, String> params = getParams();
+		Map<String, String> params = getQueryParams();
 		if (params != null && params.size() > 0) {
 			OutputStream os = conn.getOutputStream();
 			OutputStreamWriter writer = new OutputStreamWriter(os);

@@ -11,6 +11,7 @@ package org.eclipse.ecf.provider.etcd;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.UUID;
 
 import org.eclipse.ecf.core.identity.IDFactory;
 import org.eclipse.ecf.discovery.DiscoveryContainerConfig;
@@ -43,18 +44,34 @@ public class EtcdDiscoveryContainerConfig extends DiscoveryContainerConfig {
 	public static final String ETCD_TARGETID_DEFAULT = System
 			.getProperty(ETCD_TARGETID_PROP);
 
-	private EtcdServiceID targetID;
+	public static final String ETCD_SESSIONID_PROP = EtcdDiscoveryContainerInstantiator.NAME +".sessionid"; //$NON-NLS-1$
+	public static final String ETCD_SESSIONID_DEFAULT = System.getProperty(ETCD_SESSIONID_PROP);
 
+	private EtcdServiceID targetID;
+	private String sessionId;
+	
 	public EtcdDiscoveryContainerConfig(String containerId)
 			throws MalformedURLException, URISyntaxException {
 		super(IDFactory.getDefault().createStringID(containerId));
 		setTargetID(null);
+		setSessionId(null);
+	}
+
+	private void setSessionId(String id) {
+		if (id == null) {
+			if (ETCD_SESSIONID_DEFAULT == null) {
+				id = UUID.randomUUID().toString();
+			} else
+				id = ETCD_SESSIONID_DEFAULT;
+		} 
+		this.sessionId = id;
 	}
 
 	public EtcdDiscoveryContainerConfig(String containerId, String targetId)
 			throws MalformedURLException, URISyntaxException {
 		this(containerId);
 		setTargetID(targetId);
+		setSessionId(sessionId);
 	}
 
 	private void setTargetID(String aTargetId) throws MalformedURLException,
@@ -79,6 +96,10 @@ public class EtcdDiscoveryContainerConfig extends DiscoveryContainerConfig {
 
 	public EtcdServiceID getTargetID() {
 		return targetID;
+	}
+
+	public String getSessionId() {
+		return sessionId;
 	}
 
 }

@@ -17,6 +17,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.ecf.core.ContainerConnectException;
 import org.eclipse.ecf.core.events.ContainerConnectedEvent;
 import org.eclipse.ecf.core.events.ContainerConnectingEvent;
@@ -28,18 +32,27 @@ import org.eclipse.ecf.discovery.AbstractDiscoveryContainerAdapter;
 import org.eclipse.ecf.discovery.IServiceInfo;
 import org.eclipse.ecf.discovery.identity.IServiceID;
 import org.eclipse.ecf.discovery.identity.IServiceTypeID;
+import org.eclipse.ecf.internal.provider.etcd.DebugOptions;
+import org.eclipse.ecf.internal.provider.etcd.LogUtility;
 import org.eclipse.ecf.provider.etcd.identity.EtcdNamespace;
 import org.eclipse.ecf.provider.etcd.identity.EtcdServiceID;
+import org.eclipse.ecf.provider.etcd.protocol.EtcdDeleteRequest;
+import org.eclipse.ecf.provider.etcd.protocol.EtcdErrorResponse;
 import org.eclipse.ecf.provider.etcd.protocol.EtcdException;
 import org.eclipse.ecf.provider.etcd.protocol.EtcdGetRequest;
+import org.eclipse.ecf.provider.etcd.protocol.EtcdNode;
+import org.eclipse.ecf.provider.etcd.protocol.EtcdProtocol;
 import org.eclipse.ecf.provider.etcd.protocol.EtcdResponse;
 import org.eclipse.ecf.provider.etcd.protocol.EtcdSetRequest;
+import org.eclipse.ecf.provider.etcd.protocol.EtcdSuccessResponse;
+import org.eclipse.ecf.provider.etcd.protocol.EtcdWatchRequest;
 
 public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 
 	private final Map<IServiceID, IServiceInfo> publishedServices = new HashMap<IServiceID, IServiceInfo>();
 
 	private EtcdServiceID targetID;
+	private String sessionId;
 
 	public EtcdDiscoveryContainer(EtcdDiscoveryContainerConfig config) {
 		super(EtcdNamespace.NAME, config);
@@ -96,13 +109,8 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 		return EtcdDiscoveryContainerInstantiator.NAME;
 	}
 
-	protected void trace(String method, String message) {
-		// XXX todo
-		System.out.println(method+":"+message); //$NON-NLS-1$
-	}
-	
-	public void connect(ID aTargetID, IConnectContext connectContext)
-			throws ContainerConnectException {
+	public synchronized void connect(ID aTargetID,
+			IConnectContext connectContext) throws ContainerConnectException {
 		if (targetID != null) {
 			throw new ContainerConnectException("Already connected"); //$NON-NLS-1$
 		}
@@ -120,63 +128,163 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 						"targetID must be of type EtcdServiceID"); //$NON-NLS-1$
 			targetID = (EtcdServiceID) aTargetID;
 		}
+		// Now set sessionId
+		sessionId = config.getSessionId();
+		if (sessionId == null)
+			throw new ContainerConnectException("SessionId cannot be null"); //$NON-NLS-1$
+
 		doConnect();
 		fireContainerEvent(new ContainerConnectedEvent(this.getID(), aTargetID));
 	}
-	
+
 	protected EtcdServiceID getTargetID() {
 		return targetID;
 	}
 
-	protected String getEtcdDirectoryURL() throws ContainerConnectException {
-		String urlPrefix = getTargetID().getLocation().toString();
-		// Make sure that the targetID has '/' suffix
-		if (!urlPrefix.endsWith("/")) //$NON-NLS-1$
-			urlPrefix = urlPrefix + "/"; //$NON-NLS-1$
-		return urlPrefix + getID().getName();
+	private String verifySlash(String prefix) {
+		if (!prefix.endsWith("/")) //$NON-NLS-1$
+			return prefix + "/"; //$NON-NLS-1$
+		else
+			return prefix;
 	}
-	
-	private void doConnect() throws ContainerConnectException {
+
+	protected String getEtcdDirectoryURL() {
+		// Make sure that the targetID has '/' suffix
+		return verifySlash(verifySlash(getTargetID().getLocation().toString())
+				+ getID().getName());
+	}
+
+	protected void trace(String methodName, String message) {
+		LogUtility.trace(methodName, DebugOptions.DEBUG, getClass(), message);
+	}
+
+	protected void doConnect() throws ContainerConnectException {
 		String directoryURL = getEtcdDirectoryURL();
 		try {
-			trace("doConnect","checking for etcd directoryURL="+directoryURL);  //$NON-NLS-1$//$NON-NLS-2$
-			EtcdResponse directoryExistsResponse = new EtcdGetRequest(getEtcdDirectoryURL(),false).execute();
+			trace("doConnect", "checking for etcd directoryURL=" + directoryURL); //$NON-NLS-1$//$NON-NLS-2$
+			EtcdResponse directoryExistsResponse = new EtcdGetRequest(
+					getEtcdDirectoryURL(), false).execute();
 			if (directoryExistsResponse.isError()) {
-				trace("doConnect","etcd directoryURL="+directoryURL+" does not exist, attempting to create");  //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
+				trace("doConnect", "etcd directoryURL=" + directoryURL + " does not exist, attempting to create"); //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
 				// Try to create directory
-				directoryExistsResponse = new EtcdSetRequest(directoryURL).execute();
+				directoryExistsResponse = new EtcdSetRequest(directoryURL)
+						.execute();
 				if (directoryExistsResponse.isError()) {
-					trace("doConnect ERROR","etcd directoryURL could not be created, throwing"); //$NON-NLS-1$ //$NON-NLS-2$
-					throw new ContainerConnectException("Could not create etcd directoryURL="+directoryURL); //$NON-NLS-1$
+					trace("doConnect ERROR", "etcd directoryURL could not be created, throwing"); //$NON-NLS-1$ //$NON-NLS-2$
+					throw new ContainerConnectException(
+							"Could not create etcd directoryURL=" + directoryURL); //$NON-NLS-1$
 				}
 			}
 			// Else the directory already exists or was successfully created
-			trace("doConnect","Directory exists="+directoryURL); //$NON-NLS-1$ //$NON-NLS-2$
+			trace("doConnect", "Directory exists=" + directoryURL); //$NON-NLS-1$ //$NON-NLS-2$
+			initializeDiscoveryJob();
 		} catch (EtcdException e) {
-			throw new ContainerConnectException("Exception communicating with etcd service at directoryURL="+directoryURL,e);
+			throw new ContainerConnectException(
+					"Exception communicating with etcd service at directoryURL=" + directoryURL, e); //$NON-NLS-1$
 		}
-	}
-
-	private void startDiscoveryJob() {
-		// TODO Auto-generated method stub
-
-	}
-
-	private void stopDiscoveryJob() {
-		// TODO Auto-generated method stub
-
 	}
 
 	public ID getConnectedID() {
 		return targetID;
 	}
 
-	public void disconnect() {
-		ID anID = getConnectedID();
-		fireContainerEvent(new ContainerDisconnectingEvent(this.getID(), anID));
-		stopDiscoveryJob();
-		targetID = null;
-		fireContainerEvent(new ContainerDisconnectedEvent(this.getID(), anID));
+	public synchronized void disconnect() {
+		if (targetID != null) {
+			ID anID = getConnectedID();
+			fireContainerEvent(new ContainerDisconnectingEvent(this.getID(),
+					anID));
+			shutdownEtcdConnection();
+			targetID = null;
+			fireContainerEvent(new ContainerDisconnectedEvent(this.getID(),
+					anID));
+		}
+	}
+
+	private void shutdownEtcdConnection() {
+		// If we haven't registered any service infos, then
+		try {
+			new EtcdSetRequest(getEtcdDirectoryURL()+this.sessionId, "close",30).execute(); //$NON-NLS-1$
+		} catch (EtcdException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	private EtcdDiscoveryJob discoveryJob;
+	private boolean done;
+
+	private synchronized void initializeDiscoveryJob() {
+		if (discoveryJob == null) {
+			discoveryJob = new EtcdDiscoveryJob();
+			discoveryJob.schedule();
+		}
+	}
+
+	protected String getWatchRequestURL() {
+		return getEtcdDirectoryURL();
+	}
+
+	class EtcdDiscoveryJob extends Job {
+
+		public EtcdDiscoveryJob() {
+			super("Etcd Discovery"); //$NON-NLS-1$
+		}
+
+		private String etcdIndex;
+
+		private void computeNewEtcdIndex(EtcdSuccessResponse response) {
+			int modifiedIndex = response.getNode().getModifiedIndex();
+			modifiedIndex += 1;
+			this.etcdIndex = Integer.toString(modifiedIndex);
+		}
+
+		void trace(String message) {
+			LogUtility.trace("run", DebugOptions.WATCHJOB, EtcdDiscoveryJob.class, message); //$NON-NLS-1$
+		}
+		
+		@Override
+		protected IStatus run(IProgressMonitor monitor) {
+			trace("watch job starting"); //$NON-NLS-1$
+			while (!done) {
+				if (monitor.isCanceled())
+					return Status.CANCEL_STATUS;
+				String url = getWatchRequestURL();
+				try {
+					EtcdResponse response = (etcdIndex == null) ? new EtcdGetRequest(
+							url, false).execute() : new EtcdWatchRequest(url,
+							etcdIndex).execute();
+					if (monitor.isCanceled())
+						return Status.CANCEL_STATUS;
+					if (targetID == null || sessionId == null)
+						return Status.CANCEL_STATUS;
+					System.out.println(response);
+					if (response.isError()) {
+						EtcdErrorResponse error = response.getError();
+						// XXX todo handle error response
+					} else {
+						EtcdSuccessResponse success = response.getResponse();
+						EtcdNode node = success.getNode();
+						String action = success.getAction();
+						String key = node.getKey();
+						System.out.println("key="+key); //$NON-NLS-1$
+						if (action.equals("set") && key.endsWith(sessionId)) { //$NON-NLS-1$
+							// We have requested close
+							trace("key="+key+" matched sessionId="+sessionId+". Thread loop is done"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+							done = true;
+						} else {
+							computeNewEtcdIndex(success);
+
+							// XXX todo handle success response							
+						}
+					}
+				} catch (EtcdException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			trace("watch job exiting normally"); //$NON-NLS-1$
+			return Status.OK_STATUS;
+		}
 	}
 
 }

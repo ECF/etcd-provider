@@ -18,6 +18,8 @@ import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.ecf.internal.provider.etcd.DebugOptions;
+import org.eclipse.ecf.internal.provider.etcd.LogUtility;
 import org.json.JSONException;
 
 public abstract class EtcdRequest extends EtcdProtocol {
@@ -109,6 +111,8 @@ public abstract class EtcdRequest extends EtcdProtocol {
 		try {
 			// Create url (with any query parameters)
 			URL url = new URL(getUrlWithQuery());
+			LogUtility
+					.trace("execute", DebugOptions.PROTOCOL, this.getClass(), "url=" + url); //$NON-NLS-1$//$NON-NLS-2$
 			String protocol = url.getProtocol();
 			if (!("http".equals(protocol) || "https".equals(protocol)))throw new IOException("url=" + url + " not http protocol"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 			conn = (HttpURLConnection) url.openConnection();

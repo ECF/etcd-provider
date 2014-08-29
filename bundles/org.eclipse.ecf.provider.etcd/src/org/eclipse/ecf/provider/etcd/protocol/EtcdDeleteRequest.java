@@ -15,8 +15,6 @@ public class EtcdDeleteRequest extends EtcdSetRequest {
 			setQueryBoolean(RECURSIVE);
 		else
 			setQueryBoolean(DIR);
-		if (this.params != null)
-			this.params.clear();
 	}
 
 	protected HttpURLConnection setRequestMethod(HttpURLConnection conn)

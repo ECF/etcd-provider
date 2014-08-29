@@ -12,6 +12,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.eclipse.ecf.internal.provider.etcd.DebugOptions;
+import org.eclipse.ecf.internal.provider.etcd.LogUtility;
+
 public abstract class EtcdProtocol {
 
 	public static final int READ_TIMEOUT = Integer.parseInt(System.getProperty(
@@ -36,7 +39,9 @@ public abstract class EtcdProtocol {
 			try {
 				ins.close();
 			} catch (IOException e) {
-				e.printStackTrace();
+				LogUtility
+						.logError(
+								"readStream", DebugOptions.PROTOCOL, getClass(), "Exception closing input stream", e); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 		}
 	}

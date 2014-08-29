@@ -96,8 +96,7 @@ public class DiscoveryTest extends AbstractDiscoveryTest {
 	}
 
 	public void testGetRequestError() throws Exception {
-		String url = "http://composent.com:4001/v2/keys/foo";
-		EtcdGetRequest request = new EtcdGetRequest(url);
+		EtcdGetRequest request = new EtcdGetRequest(GET_FAIL);
 		EtcdResponse response = request.execute();
 		assertTrue(response.isError());
 	}

@@ -11,10 +11,13 @@ package org.eclipse.ecf.internal.provider.etcd;
 import java.util.Dictionary;
 import java.util.Properties;
 
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.ecf.core.ContainerConnectException;
 import org.eclipse.ecf.core.ContainerTypeDescription;
 import org.eclipse.ecf.core.IContainerFactory;
 import org.eclipse.ecf.core.identity.Namespace;
+import org.eclipse.ecf.core.util.LogHelper;
+import org.eclipse.ecf.core.util.SystemLogService;
 import org.eclipse.ecf.core.util.Trace;
 import org.eclipse.ecf.discovery.IDiscoveryAdvertiser;
 import org.eclipse.ecf.discovery.IDiscoveryLocator;
@@ -26,7 +29,9 @@ import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceFactory;
+import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
+import org.osgi.service.log.LogService;
 import org.osgi.util.tracker.ServiceTracker;
 
 @SuppressWarnings("rawtypes")
@@ -54,6 +59,11 @@ public class Activator implements BundleActivator {
 			EtcdDiscoveryContainerInstantiator.NAME,
 			new EtcdDiscoveryContainerInstantiator(),
 			"Etcd Discovery Container", true, false); //$NON-NLS-1$
+
+	// Logging
+	private ServiceTracker logServiceTracker = null;
+	private LogService logService = null;
+	private Object logServiceTrackerLock = new Object();
 
 	@SuppressWarnings("unchecked")
 	public void start(BundleContext ctxt) throws Exception {
@@ -105,6 +115,13 @@ public class Activator implements BundleActivator {
 			container.disconnect();
 			container = null;
 		}
+		synchronized (logServiceTrackerLock) {
+			if (logServiceTracker != null) {
+				logServiceTracker.close();
+				logServiceTracker = null;
+				logService = null;
+			}
+		}
 		context = null;
 		plugin = null;
 	}
@@ -141,5 +158,44 @@ public class Activator implements BundleActivator {
 		}
 		return (IContainerFactory) cfTracker.getService();
 	}
+
+	@SuppressWarnings("unchecked")
+	public LogService getLogService() {
+		if (context == null)
+			return null;
+		synchronized (logServiceTrackerLock) {
+			if (logServiceTracker == null) {
+				logServiceTracker = new ServiceTracker(context,
+						LogService.class.getName(), null);
+				logServiceTracker.open();
+			}
+			logService = (LogService) logServiceTracker.getService();
+			if (logService == null)
+				logService = new SystemLogService(PLUGIN_ID);
+			return logService;
+		}
+	}
+
+
+	public void log(IStatus status) {
+		if (logService == null)
+			logService = getLogService();
+		if (logService != null)
+			logService.log(null, LogHelper.getLogCode(status),
+					LogHelper.getLogMessage(status), status.getException());
+	}
+
+	public void log(ServiceReference sr, IStatus status) {
+		log(sr, LogHelper.getLogCode(status), LogHelper.getLogMessage(status),
+				status.getException());
+	}
+
+	public void log(ServiceReference sr, int level, String message, Throwable t) {
+		if (logService == null)
+			logService = getLogService();
+		if (logService != null)
+			logService.log(sr, level, message, t);
+	}
+
 
 }
