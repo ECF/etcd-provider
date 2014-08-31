@@ -7,18 +7,19 @@ import org.eclipse.ecf.discovery.IDiscoveryAdvertiser;
 import org.eclipse.ecf.discovery.IDiscoveryLocator;
 import org.eclipse.ecf.discovery.IServiceProperties;
 import org.eclipse.ecf.discovery.identity.IServiceID;
+import org.eclipse.ecf.internal.provider.etcd.protocol.EtcdDeleteRequest;
+import org.eclipse.ecf.internal.provider.etcd.protocol.EtcdGetRequest;
+import org.eclipse.ecf.internal.provider.etcd.protocol.EtcdNode;
+import org.eclipse.ecf.internal.provider.etcd.protocol.EtcdResponse;
+import org.eclipse.ecf.internal.provider.etcd.protocol.EtcdSetRequest;
+import org.eclipse.ecf.internal.provider.etcd.protocol.EtcdSuccessResponse;
 import org.eclipse.ecf.provider.etcd.EtcdDiscoveryContainerInstantiator;
 import org.eclipse.ecf.provider.etcd.EtcdServiceInfo;
 import org.eclipse.ecf.provider.etcd.identity.EtcdNamespace;
-import org.eclipse.ecf.provider.etcd.protocol.EtcdDeleteRequest;
-import org.eclipse.ecf.provider.etcd.protocol.EtcdGetRequest;
-import org.eclipse.ecf.provider.etcd.protocol.EtcdNode;
-import org.eclipse.ecf.provider.etcd.protocol.EtcdResponse;
-import org.eclipse.ecf.provider.etcd.protocol.EtcdSetRequest;
-import org.eclipse.ecf.provider.etcd.protocol.EtcdSuccessResponse;
 import org.eclipse.ecf.tests.discovery.AbstractDiscoveryTest;
 import org.eclipse.ecf.tests.discovery.Activator;
 
+@SuppressWarnings("restriction")
 public class DiscoveryTest extends AbstractDiscoveryTest {
 
 	public static final String TEST_HOST = System.getProperty(
@@ -96,7 +97,7 @@ public class DiscoveryTest extends AbstractDiscoveryTest {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		advertiser.unregisterService(this.serviceInfo);
+		advertiser.unregisterAllServices();
 		// sleep for while
 		try {
 			Thread.sleep(30000);
