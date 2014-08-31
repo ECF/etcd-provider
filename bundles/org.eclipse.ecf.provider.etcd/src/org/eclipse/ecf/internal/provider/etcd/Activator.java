@@ -176,7 +176,6 @@ public class Activator implements BundleActivator {
 		}
 	}
 
-
 	public void log(IStatus status) {
 		if (logService == null)
 			logService = getLogService();
@@ -196,6 +195,5 @@ public class Activator implements BundleActivator {
 		if (logService != null)
 			logService.log(sr, level, message, t);
 	}
-
 
 }

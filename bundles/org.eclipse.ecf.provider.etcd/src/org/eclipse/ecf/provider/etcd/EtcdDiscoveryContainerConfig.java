@@ -44,12 +44,19 @@ public class EtcdDiscoveryContainerConfig extends DiscoveryContainerConfig {
 	public static final String ETCD_TARGETID_DEFAULT = System
 			.getProperty(ETCD_TARGETID_PROP);
 
-	public static final String ETCD_SESSIONID_PROP = EtcdDiscoveryContainerInstantiator.NAME +".sessionid"; //$NON-NLS-1$
-	public static final String ETCD_SESSIONID_DEFAULT = System.getProperty(ETCD_SESSIONID_PROP);
+	public static final String ETCD_SESSIONID_PROP = EtcdDiscoveryContainerInstantiator.NAME
+			+ ".sessionid"; //$NON-NLS-1$
+	public static final String ETCD_SESSIONID_DEFAULT = System
+			.getProperty(ETCD_SESSIONID_PROP);
+
+	public static final String ETCD_CLOSETTL_PROP = EtcdDiscoveryContainerInstantiator.NAME
+			+ ".closettl"; //$NON-NLS-1$
+	public static final Integer ETCD_CLOSETTL_DEFAULT = Integer.getInteger(
+			ETCD_CLOSETTL_PROP, 10);
 
 	private EtcdServiceID targetID;
 	private String sessionId;
-	
+
 	public EtcdDiscoveryContainerConfig(String containerId)
 			throws MalformedURLException, URISyntaxException {
 		super(IDFactory.getDefault().createStringID(containerId));
@@ -63,7 +70,7 @@ public class EtcdDiscoveryContainerConfig extends DiscoveryContainerConfig {
 				id = UUID.randomUUID().toString();
 			} else
 				id = ETCD_SESSIONID_DEFAULT;
-		} 
+		}
 		this.sessionId = id;
 	}
 
@@ -100,6 +107,10 @@ public class EtcdDiscoveryContainerConfig extends DiscoveryContainerConfig {
 
 	public String getSessionId() {
 		return sessionId;
+	}
+
+	public int getCloseTTL() {
+		return ETCD_CLOSETTL_DEFAULT.intValue();
 	}
 
 }

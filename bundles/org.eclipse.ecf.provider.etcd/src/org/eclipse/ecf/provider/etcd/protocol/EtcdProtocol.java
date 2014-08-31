@@ -27,6 +27,15 @@ public abstract class EtcdProtocol {
 	public static final String NODE_KEY = "node"; //$NON-NLS-1$
 	public static final String PREVIOUSNODE_KEY = "prevNode"; //$NON-NLS-1$
 
+	public static final String ACTION_SET = "set"; //$NON-NLS-1$
+	public static final String ACTION_UPDATE = "update"; //$NON-NLS-1$
+	public static final String ACTION_DELETE = "delete"; //$NON-NLS-1$
+	public static final String ACTION_EXPIRE = "expire"; //$NON-NLS-1$
+	public static final String ACTION_GET = "get"; //$NON-NLS-1$
+	public static final String ACTION_CREATE = "create"; //$NON-NLS-1$
+	public static final String ACTION_COMPARE_AND_SWAP = "compareAndSwap"; //$NON-NLS-1$
+	public static final String ACTION_COMPARE_AND_DELETE = "compareAndDelete"; //$NON-NLS-1$
+
 	protected String readStream(InputStream ins) throws IOException {
 		try {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();

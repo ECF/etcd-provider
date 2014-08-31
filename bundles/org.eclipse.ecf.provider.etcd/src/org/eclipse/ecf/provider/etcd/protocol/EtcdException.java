@@ -12,6 +12,8 @@ public class EtcdException extends Exception {
 
 	private static final long serialVersionUID = 7690024036798827062L;
 
+	private EtcdErrorResponse errorResponse;
+
 	public EtcdException() {
 	}
 
@@ -25,6 +27,15 @@ public class EtcdException extends Exception {
 
 	public EtcdException(String message, Throwable cause) {
 		super(message, cause);
+	}
+
+	public EtcdException(String message, EtcdErrorResponse errorResponse) {
+		super(message);
+		this.errorResponse = errorResponse;
+	}
+
+	public EtcdErrorResponse getErrorResponse() {
+		return errorResponse;
 	}
 
 }
