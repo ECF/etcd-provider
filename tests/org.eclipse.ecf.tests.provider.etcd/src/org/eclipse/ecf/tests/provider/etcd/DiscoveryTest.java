@@ -70,7 +70,7 @@ public class DiscoveryTest extends AbstractDiscoveryTest {
 		EtcdResponse response = new EtcdGetRequest(TEST_URL_BASE, true)
 				.execute();
 		assertFalse(response.isError());
-		EtcdSuccessResponse r = response.getResponse();
+		EtcdSuccessResponse r = response.getSuccessResponse();
 		EtcdNode node = r.getNode();
 		assertNotNull(node);
 		for (EtcdNode n : node.getNodes()) {
@@ -112,7 +112,7 @@ public class DiscoveryTest extends AbstractDiscoveryTest {
 				.execute();
 		assertFalse(response.isError());
 		System.out.println("testGetRequestSucceed(response="
-				+ response.getResponse() + ")");
+				+ response.getSuccessResponse() + ")");
 	}
 
 	public void testGetRequestSucceedRecursive() throws Exception {
@@ -121,7 +121,7 @@ public class DiscoveryTest extends AbstractDiscoveryTest {
 		EtcdResponse response = new EtcdGetRequest(GET_SUCCEED, true).execute();
 		assertFalse(response.isError());
 		System.out.println("testGetRequestSucceedRecursive(response="
-				+ response.getResponse() + ")");
+				+ response.getSuccessResponse() + ")");
 	}
 
 	public void testGetRequestError() throws Exception {
@@ -136,7 +136,7 @@ public class DiscoveryTest extends AbstractDiscoveryTest {
 				"hello this is new value").execute();
 		assertFalse(response.isError());
 		System.out.println("testCreateSucceed(response="
-				+ response.getResponse() + ")");
+				+ response.getSuccessResponse() + ")");
 	}
 
 	public void testCreateDirSucceed() throws Exception {
@@ -145,7 +145,7 @@ public class DiscoveryTest extends AbstractDiscoveryTest {
 				+ String.valueOf(System.currentTimeMillis())).execute();
 		assertFalse(response.isError());
 		System.out.println("testCreateDirSucceed(response="
-				+ response.getResponse() + ")");
+				+ response.getSuccessResponse() + ")");
 	}
 
 	public void testSerializeAndDeserializeServiceInfo() throws Exception {

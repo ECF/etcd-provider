@@ -11,7 +11,7 @@ package org.eclipse.ecf.internal.provider.etcd.protocol;
 public abstract class EtcdResponse extends EtcdProtocol {
 	public abstract boolean isError();
 
-	public abstract EtcdSuccessResponse getResponse();
+	public abstract EtcdSuccessResponse getSuccessResponse();
 
-	public abstract EtcdErrorResponse getError();
+	public abstract EtcdErrorResponse getErrorResponse();
 }

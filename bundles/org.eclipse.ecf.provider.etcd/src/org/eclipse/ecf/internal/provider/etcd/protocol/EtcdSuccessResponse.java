@@ -72,12 +72,12 @@ public class EtcdSuccessResponse extends EtcdResponse {
 	}
 
 	@Override
-	public EtcdSuccessResponse getResponse() {
+	public EtcdSuccessResponse getSuccessResponse() {
 		return this;
 	}
 
 	@Override
-	public EtcdErrorResponse getError() {
+	public EtcdErrorResponse getErrorResponse() {
 		return null;
 	}
 

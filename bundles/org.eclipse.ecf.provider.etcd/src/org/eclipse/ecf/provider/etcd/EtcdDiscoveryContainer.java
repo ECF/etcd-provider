@@ -160,7 +160,7 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 		try {
 			EtcdResponse response = request.execute();
 			if (response.isError())
-				throw new EtcdException(exceptionMessage, response.getError());
+				throw new EtcdException(exceptionMessage, response.getErrorResponse());
 		} catch (EtcdException e) {
 			logAndThrowEtcdError(methodName,
 					"Error communicating with etcd server", e); //$NON-NLS-1$ 
@@ -253,7 +253,7 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 						"c", ((EtcdDiscoveryContainerConfig) getConfig()).getCloseTTL()).execute(); //$NON-NLS-1$
 				if (response.isError())
 					throw new EtcdException(
-							"Error in shudownEtcdConnection", response.getError()); //$NON-NLS-1$
+							"Error in shudownEtcdConnection", response.getErrorResponse()); //$NON-NLS-1$
 			} catch (EtcdException e) {
 				logEtcdError(
 						"shutdownEtcdConnection", "Error with etcd shutdown", e); //$NON-NLS-1$ //$NON-NLS-2$
@@ -303,9 +303,9 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 						return Status.CANCEL_STATUS;
 					if (response.isError()) {
 						logEtcdError(
-								"watchJobExec", "Etcd error response to watch request", new EtcdException("Error response", response.getError())); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+								"watchJobExec", "Etcd error response to watch request", new EtcdException("Error response", response.getErrorResponse())); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 					} else {
-						EtcdSuccessResponse success = response.getResponse();
+						EtcdSuccessResponse success = response.getSuccessResponse();
 						String action = success.getAction();
 						if (action == null) {
 							logEtcdError(
