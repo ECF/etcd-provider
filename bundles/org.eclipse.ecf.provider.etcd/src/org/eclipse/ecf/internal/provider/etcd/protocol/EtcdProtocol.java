@@ -37,6 +37,7 @@ public abstract class EtcdProtocol {
 	public static final String ACTION_COMPARE_AND_DELETE = "compareAndDelete"; //$NON-NLS-1$
 
 	protected String readStream(InputStream ins) throws IOException {
+		if (ins == null) return "InputStream is null"; //$NON-NLS-1$
 		try {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			byte[] buffer = new byte[1024];
