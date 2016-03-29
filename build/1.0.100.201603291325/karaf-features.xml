@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <features xmlns="http://karaf.apache.org/xmlns/features/v1.2.0" name="ecf-discovery-etcd-1.0.100">
 
 <feature name="ecf-remoteservices-discprovider-etcd" version="1.0.100" description="ECF RemoteServices Etcd Discovery Provider">
