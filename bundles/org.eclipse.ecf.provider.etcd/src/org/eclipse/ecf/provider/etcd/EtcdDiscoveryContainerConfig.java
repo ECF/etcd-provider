@@ -54,9 +54,13 @@ public class EtcdDiscoveryContainerConfig extends DiscoveryContainerConfig {
 	public static final Integer ETCD_CLOSETTL_DEFAULT = Integer.getInteger(
 			ETCD_CLOSETTL_PROP, 10);
 
+	public static final String ETCD_TTL_PROP = EtcdDiscoveryContainerInstantiator.NAME + ".ttl"; //$NON-NLS-1$
+	public static final Integer ETCD_TTL_DEFAULT = Integer.getInteger(ETCD_TTL_PROP, 1200);
+	
 	private EtcdServiceID targetID;
 	private String sessionId;
-
+	private long ttl = ETCD_TTL_DEFAULT.longValue();
+	
 	public EtcdDiscoveryContainerConfig(String containerId)
 			throws MalformedURLException, URISyntaxException {
 		super(IDFactory.getDefault().createStringID(containerId));
@@ -81,6 +85,13 @@ public class EtcdDiscoveryContainerConfig extends DiscoveryContainerConfig {
 		setSessionId(sessionId);
 	}
 
+	public EtcdDiscoveryContainerConfig(String containerId, String targetId, long ttl) 
+		throws MalformedURLException, URISyntaxException {
+		this(containerId);
+		setTargetID(targetId);
+		setSessionId(sessionId);
+		setTTL(ttl);
+	}
 	private void setTargetID(String aTargetId) throws MalformedURLException,
 			URISyntaxException {
 		URL url = null;
@@ -111,6 +122,14 @@ public class EtcdDiscoveryContainerConfig extends DiscoveryContainerConfig {
 
 	public int getCloseTTL() {
 		return ETCD_CLOSETTL_DEFAULT.intValue();
+	}
+
+	public void setTTL(long ttl) {
+		this.ttl = ttl;
+	}
+	
+	public long getTTL() {
+		return this.ttl;
 	}
 
 }

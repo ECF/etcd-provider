@@ -237,5 +237,12 @@ public class EtcdServiceInfo extends ServiceInfo {
 						.getPriority(), serviceInfo.getWeight(), serviceInfo
 						.getServiceProperties(), serviceInfo.getTTL());
 	}
+	
+	public EtcdServiceInfo(IServiceInfo serviceInfo, long ttl) {
+		this(serviceInfo.getLocation(), serviceInfo.getServiceName(),
+				serviceInfo.getServiceID().getServiceTypeID(), serviceInfo
+						.getPriority(), serviceInfo.getWeight(), serviceInfo
+						.getServiceProperties(), ttl);
+	}
 
 }
