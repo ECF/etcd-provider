@@ -108,9 +108,10 @@ public abstract class EtcdRequest extends EtcdProtocol {
 
 	public EtcdResponse execute() throws EtcdException {
 		HttpURLConnection conn = null;
+		URL url = null;
 		try {
 			// Create url (with any query parameters)
-			URL url = new URL(getUrlWithQuery());
+			url = new URL(getUrlWithQuery());
 			LogUtility
 					.trace("execute", DebugOptions.PROTOCOL, this.getClass(), "url=" + url); //$NON-NLS-1$//$NON-NLS-2$
 			String protocol = url.getProtocol();
@@ -120,11 +121,11 @@ public abstract class EtcdRequest extends EtcdProtocol {
 			setRequestMethod(conn);
 			return getResponseOrError(conn);
 		} catch (MalformedURLException e) {
-			throw new EtcdException("Url " + getUrl() + " is malformed", e); //$NON-NLS-1$ //$NON-NLS-2$
+			throw new EtcdException("Url is malformed=" + url, e); //$NON-NLS-1$ 
 		} catch (IOException e) {
-			throw new EtcdException("Error communicating with server", e); //$NON-NLS-1$
+			throw new EtcdException("Error communicating with server at "+url, e); //$NON-NLS-1$
 		} catch (JSONException e) {
-			throw new EtcdException("Parsing error", e); //$NON-NLS-1$
+			throw new EtcdException("Parsing error for url="+url, e); //$NON-NLS-1$
 		} finally {
 			if (conn != null)
 				conn.disconnect();

@@ -427,7 +427,7 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 
 	protected void logAndThrowEtcdError(String method, String message, EtcdException e) {
 		logEtcdError(method, message, e);
-		throw new RuntimeException(e);
+		throw new RuntimeException(message, e);
 	}
 
 	public IServiceInfo getServiceInfo(IServiceID aServiceID) {
