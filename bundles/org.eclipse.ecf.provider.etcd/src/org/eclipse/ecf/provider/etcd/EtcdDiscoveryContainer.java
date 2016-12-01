@@ -125,7 +125,8 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 			ttl = ((EtcdDiscoveryContainerConfig) getConfig()).getTTL();
 		EtcdServiceInfo si = (serviceInfo instanceof EtcdServiceInfo) ? (EtcdServiceInfo) serviceInfo
 				: new EtcdServiceInfo(serviceInfo, ttl);
-		EtcdServiceInfoKey siKey = new EtcdServiceInfoKey();
+		String endpointid = serviceInfo.getServiceProperties().getPropertyString("endpoint.id"); //$NON-NLS-1$
+		EtcdServiceInfoKey siKey = (endpointid == null)?new EtcdServiceInfoKey():new EtcdServiceInfoKey(this.sessionId,endpointid);
 		int etcdTTL = convertLongTTLToIntTTL(si.getTTL());
 		String siString = null;
 		try {
