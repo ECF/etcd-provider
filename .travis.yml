@@ -10,15 +10,3 @@ language: java
 jdk:
   - oraclejdk8
 
-env: DISPLAY=:99.0
-
-addons:
-  apt:
-    packages:
-    - fluxbox
-
-before_script:
-  - export DISPLAY=:99.0
-  - Xvfb :99.0 -extension RANDR > /dev/null &
-  - fluxbox &
-  - sleep 10
