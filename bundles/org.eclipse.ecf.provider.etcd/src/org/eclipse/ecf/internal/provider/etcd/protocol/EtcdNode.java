@@ -59,7 +59,7 @@ public class EtcdNode {
 		this.directory = jsonObject.optBoolean(DIR_KEY);
 		this.createdIndex = jsonObject.optInt(CREATEDINDEX_KEY);
 		this.expiration = getOptString(jsonObject, EXPIRATION_KEY);
-		this.key = jsonObject.getString(KEY_KEY);
+		this.key = getOptString(jsonObject, KEY_KEY);
 		this.modifiedIndex = jsonObject.optInt(MODIFIEDINDEX_KEY);
 		this.ttl = jsonObject.optInt(TTL_KEY);
 		this.value = jsonObject.optString(VALUE_KEY);

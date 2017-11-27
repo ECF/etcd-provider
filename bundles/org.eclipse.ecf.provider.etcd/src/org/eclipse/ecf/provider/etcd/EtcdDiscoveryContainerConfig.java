@@ -33,7 +33,7 @@ public class EtcdDiscoveryContainerConfig extends DiscoveryContainerConfig {
 	public static final String ETCD_TARGETID_PORT_PROP = EtcdDiscoveryContainerInstantiator.NAME
 			+ ".port"; //$NON-NLS-1$
 	public static final Integer ETCD_TARGETID_PORT_DEFAULT = Integer
-			.getInteger(ETCD_TARGETID_PORT_PROP, 4001);
+			.getInteger(ETCD_TARGETID_PORT_PROP, 2379);
 	public static final String ETCD_TARGETID_PATH_PROP = EtcdDiscoveryContainerInstantiator.NAME
 			+ ".path"; //$NON-NLS-1$
 	public static final String ETCD_TARGETID_PATH_DEFAULT = System.getProperty(

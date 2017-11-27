@@ -24,8 +24,8 @@ public class DiscoveryTest extends AbstractDiscoveryTest {
 
 	public static final String TEST_HOST = System.getProperty(
 			"etcd.test.hostname", "composent.com");
-	public static final String TEST_PORT = System.getProperty("ectd.test.port",
-			"4001");
+	public static final String TEST_PORT = System.getProperty("etcd.test.port",
+			"2379");
 	public static final String TEST_URL_BASE = System.getProperty(
 			"etcd.test.getdirurl", "http://" + TEST_HOST + ":" + TEST_PORT
 					+ "/v2/keys/");
