@@ -8,11 +8,13 @@
  ******************************************************************************/
 package org.eclipse.ecf.internal.provider.etcd;
 
-import java.util.Dictionary;
-import java.util.Properties;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.util.Hashtable;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.ecf.core.ContainerConnectException;
+import org.eclipse.ecf.core.ContainerCreateException;
 import org.eclipse.ecf.core.ContainerTypeDescription;
 import org.eclipse.ecf.core.IContainerFactory;
 import org.eclipse.ecf.core.identity.Namespace;
@@ -22,15 +24,13 @@ import org.eclipse.ecf.core.util.Trace;
 import org.eclipse.ecf.discovery.IDiscoveryAdvertiser;
 import org.eclipse.ecf.discovery.IDiscoveryLocator;
 import org.eclipse.ecf.provider.etcd.EtcdDiscoveryContainer;
+import org.eclipse.ecf.provider.etcd.EtcdDiscoveryContainerConfig;
 import org.eclipse.ecf.provider.etcd.EtcdDiscoveryContainerInstantiator;
 import org.eclipse.ecf.provider.etcd.identity.EtcdNamespace;
-import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
-import org.osgi.framework.ServiceFactory;
 import org.osgi.framework.ServiceReference;
-import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.log.LogService;
 import org.osgi.util.tracker.ServiceTracker;
 
@@ -55,10 +55,8 @@ public class Activator implements BundleActivator {
 		plugin = this;
 	}
 
-	private ContainerTypeDescription ctd = new ContainerTypeDescription(
-			EtcdDiscoveryContainerInstantiator.NAME,
-			new EtcdDiscoveryContainerInstantiator(),
-			"Etcd Discovery Container", true, false); //$NON-NLS-1$
+	private ContainerTypeDescription ctd = new ContainerTypeDescription(EtcdDiscoveryContainerInstantiator.NAME,
+			new EtcdDiscoveryContainerInstantiator(), "Etcd Discovery Container", true, false); //$NON-NLS-1$
 
 	// Logging
 	private ServiceTracker logServiceTracker = null;
@@ -73,37 +71,33 @@ public class Activator implements BundleActivator {
 		context.registerService(Namespace.class, new EtcdNamespace(), null);
 		context.registerService(ContainerTypeDescription.class, ctd, null);
 
-		// Register the
-		final Properties props = new Properties();
-		props.put(IDiscoveryLocator.CONTAINER_NAME,
-				EtcdDiscoveryContainerInstantiator.NAME);
-		props.put(Constants.SERVICE_RANKING, new Integer(500));
-
-		context.registerService(
-				new String[] { IDiscoveryAdvertiser.class.getName(),
-						IDiscoveryLocator.class.getName() },
-				new ServiceFactory() {
-
-					public Object getService(final Bundle bundle,
-							final ServiceRegistration registration) {
-						EtcdDiscoveryContainer etcd = null;
-						try {
-							etcd = getContainer();
-							if (etcd != null && etcd.getConnectedID() == null)
-								etcd.connect(null, null);
-						} catch (final ContainerConnectException e) {
-							Trace.catching(
-									PLUGIN_ID,
-									PLUGIN_ID + "/debug/methods/tracing", this.getClass(), "Etcd container connection failed", e); //$NON-NLS-1$ //$NON-NLS-2$
-						}
-						return etcd;
-					}
-
-					public void ungetService(final Bundle bundle,
-							final ServiceRegistration registration,
-							final Object service) {
-					}
-				}, (Dictionary) props);
+		try {
+			EtcdDiscoveryContainerConfig config = null;
+			String hostname = System.getProperty(EtcdDiscoveryContainerConfig.ETCD_TARGETID_HOSTNAME_PROP);
+			if (hostname == null) {
+				LogUtility.logWarning("createEtcdDiscoveryContainer", DebugOptions.DEBUG, Activator.class, //$NON-NLS-1$
+						"No etcd service hostname configured via system property=" //$NON-NLS-1$
+								+ EtcdDiscoveryContainerConfig.ETCD_TARGETID_HOSTNAME_PROP
+								+ ".  No EtcdDiscoveryContainer created"); //$NON-NLS-1$
+				return;
+			}
+			config = new EtcdDiscoveryContainerConfig();
+			EtcdDiscoveryContainer etcd = null;
+			if (config != null)
+				etcd = getContainer(config);
+			if (etcd != null) {
+				etcd.connect(null, null);
+				final Hashtable props = new Hashtable();
+				props.put(IDiscoveryLocator.CONTAINER_NAME, EtcdDiscoveryContainerInstantiator.NAME);
+				props.put(Constants.SERVICE_RANKING, new Integer(500));
+				context.registerService(
+						new String[] { IDiscoveryAdvertiser.class.getName(), IDiscoveryLocator.class.getName() }, etcd,
+						props);
+			}
+		} catch (MalformedURLException | URISyntaxException | ContainerConnectException | ContainerCreateException e1) {
+			Trace.catching(PLUGIN_ID, PLUGIN_ID + "/debug/methods/tracing", this.getClass(), //$NON-NLS-1$
+					"Etcd container creation failed", e1); //$NON-NLS-1$
+		}
 	}
 
 	public void stop(BundleContext context) throws Exception {
@@ -128,20 +122,13 @@ public class Activator implements BundleActivator {
 
 	private EtcdDiscoveryContainer container;
 
-	synchronized EtcdDiscoveryContainer getContainer() {
+	synchronized EtcdDiscoveryContainer getContainer(EtcdDiscoveryContainerConfig config)
+			throws ContainerCreateException {
 		if (context == null)
 			return null;
-		if (container == null) {
-			try {
-				container = (EtcdDiscoveryContainer) getContainerFactory()
-						.createContainer(ctd, (Object[]) null);
-			} catch (Exception e) {
-				Trace.catching(
-						PLUGIN_ID,
-						PLUGIN_ID + "/debug/methods/catching", this.getClass(), "getService(Bundle, ServiceRegistration)", e); //$NON-NLS-1$ //$NON-NLS-2$
-
-			}
-		}
+		if (container == null)
+			container = (EtcdDiscoveryContainer) getContainerFactory().createContainer(ctd,
+					(Object[]) new Object[] { config });
 		return container;
 	}
 
@@ -165,8 +152,7 @@ public class Activator implements BundleActivator {
 			return null;
 		synchronized (logServiceTrackerLock) {
 			if (logServiceTracker == null) {
-				logServiceTracker = new ServiceTracker(context,
-						LogService.class.getName(), null);
+				logServiceTracker = new ServiceTracker(context, LogService.class.getName(), null);
 				logServiceTracker.open();
 			}
 			logService = (LogService) logServiceTracker.getService();
@@ -180,13 +166,11 @@ public class Activator implements BundleActivator {
 		if (logService == null)
 			logService = getLogService();
 		if (logService != null)
-			logService.log(null, LogHelper.getLogCode(status),
-					LogHelper.getLogMessage(status), status.getException());
+			logService.log(null, LogHelper.getLogCode(status), LogHelper.getLogMessage(status), status.getException());
 	}
 
 	public void log(ServiceReference sr, IStatus status) {
-		log(sr, LogHelper.getLogCode(status), LogHelper.getLogMessage(status),
-				status.getException());
+		log(sr, LogHelper.getLogCode(status), LogHelper.getLogMessage(status), status.getException());
 	}
 
 	public void log(ServiceReference sr, int level, String message, Throwable t) {

@@ -61,6 +61,9 @@ public class EtcdDiscoveryContainerConfig extends DiscoveryContainerConfig {
 	private String sessionId;
 	private long ttl = ETCD_TTL_DEFAULT.longValue();
 	
+	public EtcdDiscoveryContainerConfig() throws MalformedURLException, URISyntaxException {
+		this(EtcdDiscoveryContainer.class.getName());
+	}
 	public EtcdDiscoveryContainerConfig(String containerId)
 			throws MalformedURLException, URISyntaxException {
 		super(IDFactory.getDefault().createStringID(containerId));

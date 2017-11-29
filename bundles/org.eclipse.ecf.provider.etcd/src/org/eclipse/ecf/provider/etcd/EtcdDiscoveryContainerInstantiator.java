@@ -8,9 +8,6 @@
  ******************************************************************************/
 package org.eclipse.ecf.provider.etcd;
 
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-
 import org.eclipse.ecf.core.ContainerCreateException;
 import org.eclipse.ecf.core.ContainerTypeDescription;
 import org.eclipse.ecf.core.IContainer;
@@ -23,20 +20,28 @@ public class EtcdDiscoveryContainerInstantiator implements
 
 	public static final String NAME = "ecf.discovery.etcd"; //$NON-NLS-1$
 
+	private EtcdDiscoveryContainer createContainer(EtcdDiscoveryContainerConfig config) throws ContainerCreateException {
+		try {
+			if (config == null) return new EtcdDiscoveryContainer();
+			else return new EtcdDiscoveryContainer(config);
+		} catch (Exception e) {
+			ContainerCreateException cce = new ContainerCreateException(
+					"Could not create etcd discovery container", e); //$NON-NLS-1$
+			cce.setStackTrace(e.getStackTrace());
+			throw cce;
+		}
+	}
+	
 	public IContainer createInstance(ContainerTypeDescription description,
 			Object[] parameters) throws ContainerCreateException {
 
 		EtcdDiscoveryContainer result = null;
-		if (parameters == null) {
-			try {
-				result = new EtcdDiscoveryContainer();
-			} catch (MalformedURLException e) {
-				throw new ContainerCreateException(
-						"Could not create etcd discovery container", e); //$NON-NLS-1$
-			} catch (URISyntaxException e) {
-				throw new ContainerCreateException(
-						"Could not create etcd discovery container", e); //$NON-NLS-1$
-			}
+		if (parameters == null || parameters.length == 0) {
+			result = createContainer(null);
+		} else if (parameters[0] instanceof EtcdDiscoveryContainerConfig) {
+			EtcdDiscoveryContainerConfig edcc = (EtcdDiscoveryContainerConfig) parameters[0];
+			if (edcc != null) 
+				result = createContainer(edcc);
 		}
 		return result;
 	}

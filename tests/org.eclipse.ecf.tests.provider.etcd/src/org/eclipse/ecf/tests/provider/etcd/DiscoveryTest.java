@@ -93,14 +93,14 @@ public class DiscoveryTest extends AbstractDiscoveryTest {
 		advertiser.registerService(this.serviceInfo);
 		// sleep for while
 		try {
-			Thread.sleep(30000);
+			Thread.sleep(10000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 		advertiser.unregisterAllServices();
 		// sleep for while
 		try {
-			Thread.sleep(30000);
+			Thread.sleep(10000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
