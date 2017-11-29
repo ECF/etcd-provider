@@ -5,6 +5,7 @@ import java.util.Enumeration;
 
 import org.eclipse.ecf.discovery.IDiscoveryAdvertiser;
 import org.eclipse.ecf.discovery.IDiscoveryLocator;
+import org.eclipse.ecf.discovery.IServiceInfo;
 import org.eclipse.ecf.discovery.IServiceProperties;
 import org.eclipse.ecf.discovery.identity.IServiceID;
 import org.eclipse.ecf.internal.provider.etcd.protocol.EtcdDeleteRequest;
@@ -106,6 +107,33 @@ public class DiscoveryTest extends AbstractDiscoveryTest {
 		}
 	}
 	
+	public void testLocatorServiceInfo() throws Exception {
+		IDiscoveryAdvertiser advertiser = getDiscoveryAdvertiser();
+		advertiser.registerService(this.serviceInfo);
+		// sleep for while
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		IDiscoveryLocator locator = getDiscoveryLocator();
+		IServiceInfo[] serviceInfos = locator.getServices();
+		assertTrue(serviceInfos.length > 0);
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		advertiser.unregisterAllServices();
+		// sleep for while
+		try {
+			Thread.sleep(10000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+	
+
 	public void testGetRequestSucceed() throws Exception {
 		System.out.println("testGetRequestSucceed(" + GET_SUCCEED + ")");
 		EtcdResponse response = new EtcdGetRequest(GET_SUCCEED, false)
