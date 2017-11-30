@@ -8,19 +8,15 @@
  ******************************************************************************/
 package org.eclipse.ecf.internal.provider.etcd;
 
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.util.Hashtable;
 
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.ecf.core.ContainerConnectException;
 import org.eclipse.ecf.core.ContainerCreateException;
 import org.eclipse.ecf.core.ContainerTypeDescription;
 import org.eclipse.ecf.core.IContainerFactory;
 import org.eclipse.ecf.core.identity.Namespace;
 import org.eclipse.ecf.core.util.LogHelper;
 import org.eclipse.ecf.core.util.SystemLogService;
-import org.eclipse.ecf.core.util.Trace;
 import org.eclipse.ecf.discovery.IDiscoveryAdvertiser;
 import org.eclipse.ecf.discovery.IDiscoveryLocator;
 import org.eclipse.ecf.provider.etcd.EtcdDiscoveryContainer;
@@ -75,7 +71,7 @@ public class Activator implements BundleActivator {
 			EtcdDiscoveryContainerConfig config = null;
 			String hostname = System.getProperty(EtcdDiscoveryContainerConfig.ETCD_TARGETID_HOSTNAME_PROP);
 			if (hostname == null) {
-				LogUtility.logWarning("createEtcdDiscoveryContainer", DebugOptions.DEBUG, Activator.class, //$NON-NLS-1$
+				LogUtility.logError("createEtcdDiscoveryContainer", DebugOptions.DEBUG, Activator.class, //$NON-NLS-1$
 						"No etcd service hostname configured via system property=" //$NON-NLS-1$
 								+ EtcdDiscoveryContainerConfig.ETCD_TARGETID_HOSTNAME_PROP
 								+ ".  No EtcdDiscoveryContainer created"); //$NON-NLS-1$
@@ -95,8 +91,7 @@ public class Activator implements BundleActivator {
 						props);
 			}
 		} catch (Exception e1) {
-			Trace.catching(PLUGIN_ID, PLUGIN_ID + "/debug/methods/tracing", this.getClass(), //$NON-NLS-1$
-					"Etcd container creation failed", e1); //$NON-NLS-1$
+			LogUtility.logError("start", DebugOptions.DEBUG, this.getClass(), "Etcd container creation failed", e1); //$NON-NLS-1$//$NON-NLS-2$
 		}
 	}
 
