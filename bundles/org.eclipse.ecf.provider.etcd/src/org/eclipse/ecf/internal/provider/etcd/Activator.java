@@ -94,7 +94,7 @@ public class Activator implements BundleActivator {
 						new String[] { IDiscoveryAdvertiser.class.getName(), IDiscoveryLocator.class.getName() }, etcd,
 						props);
 			}
-		} catch (MalformedURLException | URISyntaxException | ContainerConnectException | ContainerCreateException e1) {
+		} catch (Exception e1) {
 			Trace.catching(PLUGIN_ID, PLUGIN_ID + "/debug/methods/tracing", this.getClass(), //$NON-NLS-1$
 					"Etcd container creation failed", e1); //$NON-NLS-1$
 		}
