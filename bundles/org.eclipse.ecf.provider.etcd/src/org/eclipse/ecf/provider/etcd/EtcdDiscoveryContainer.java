@@ -295,10 +295,15 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 			LogUtility.trace("run", DebugOptions.TTLJOB, EtcdDiscoveryJob.class, message); //$NON-NLS-1$
 		}
 
+		private long getStartWaitTime() {
+			long kttl = this.ttl * 1000;
+			return kttl - (kttl/6);
+		}
+		
 		@Override
 		protected IStatus run(IProgressMonitor arg0) {
 			trace("TTL Job starting"); //$NON-NLS-1$
-			long waittime = (this.ttl * 1000) - 2000;
+			long waittime = getStartWaitTime();
 			while (true) {
 				if (arg0.isCanceled()) return Status.CANCEL_STATUS;
 				synchronized (this) {
@@ -312,7 +317,7 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 							} catch (EtcdException e) {
 								logEtcdError("TTLJob.run","Exception sending ttl update",e);  //$NON-NLS-1$//$NON-NLS-2$
 							}
-							waittime = this.ttl * 1000;
+							waittime = getStartWaitTime();
 						} else 
 							trace("waittime="+waittime); //$NON-NLS-1$
 					} catch (InterruptedException e) {
