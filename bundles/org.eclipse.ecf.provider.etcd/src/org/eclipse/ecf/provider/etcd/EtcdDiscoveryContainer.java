@@ -325,7 +325,6 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 						e.printStackTrace();
 					}
 				}
-				wakeUp(DELAY);
 			}
 		}
 	}
@@ -441,7 +440,8 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 					}
 				}
 			}
-			removed.forEach(si -> fireServiceUndiscovered(si));
+			for(EtcdServiceInfo si: removed) 
+				fireServiceUndiscovered(si);
 		} else
 			logEtcdError("handleRemoveDirectory", "Could not get sessionKey for node=" + node); //$NON-NLS-1$ //$NON-NLS-2$
 	}
