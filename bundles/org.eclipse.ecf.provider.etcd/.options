@@ -13,3 +13,4 @@ org.eclipse.ecf.provider.etcd/debug/exceptions/throwing=true
 org.eclipse.ecf.provider.etcd/debug/protocol=true
 
 org.eclipse.ecf.provider.etcd/debug/watchjob=true
+org.eclipse.ecf.provider.etcd/debug/ttljob=true

@@ -27,4 +27,6 @@ public interface DebugOptions {
 
 	public static final String WATCHJOB = DEBUG + "/watchjob"; //$NON-NLS-1$
 
+	public static final String TTLJOB = DEBUG + "/ttljob"; //$NON-NLS-1$
+
 }

@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -64,13 +63,13 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 		public EtcdServiceInfoKey() {
 			this.sessId = sessionId;
 			this.serviceInfoId = UUID.randomUUID().toString();
-			this.fullKey = sessionId + "." + this.serviceInfoId; //$NON-NLS-1$
+			this.fullKey = verifySlash(sessionId) + this.serviceInfoId;
 		}
 
 		public EtcdServiceInfoKey(String sessionId, String serviceInfoId) {
 			this.sessId = sessionId;
 			this.serviceInfoId = serviceInfoId;
-			this.fullKey = sessionId + "." + this.serviceInfoId; //$NON-NLS-1$
+			this.fullKey = verifySlash(sessionId) + this.serviceInfoId;
 		}
 
 		public String getFullKey() {
@@ -103,12 +102,22 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 		}
 	}
 
-	// All published services
-	protected final Map<EtcdServiceInfoKey, EtcdServiceInfo> publishedServices = new HashMap<EtcdServiceInfoKey, EtcdServiceInfo>();
+	// our published services
+	private final Map<EtcdServiceInfoKey, EtcdServiceInfo> publishedServices = new HashMap<EtcdServiceInfoKey, EtcdServiceInfo>();
 	// The targetID
-	protected EtcdServiceID targetID;
-	protected String sessionId;
-	protected String directoryUrl;
+	private EtcdServiceID targetID;
+	private String sessionId;
+	private String keyPrefix;
+
+	private String dirUrl;
+	private EtcdDiscoveryJob discoveryJob;
+	private TTLJob ttlJob;
+	private boolean watchDone;
+	private int etcdIndex;
+
+	private String getDirectoryUrl() {
+		return this.dirUrl;
+	}
 
 	public EtcdDiscoveryContainer(EtcdDiscoveryContainerConfig config) {
 		super(EtcdNamespace.NAME, config);
@@ -126,7 +135,8 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 		EtcdServiceInfo si = (serviceInfo instanceof EtcdServiceInfo) ? (EtcdServiceInfo) serviceInfo
 				: new EtcdServiceInfo(serviceInfo, ttl);
 		String endpointid = serviceInfo.getServiceProperties().getPropertyString("endpoint.id"); //$NON-NLS-1$
-		EtcdServiceInfoKey siKey = (endpointid == null)?new EtcdServiceInfoKey():new EtcdServiceInfoKey(this.sessionId,endpointid);
+		EtcdServiceInfoKey siKey = (endpointid == null) ? new EtcdServiceInfoKey()
+				: new EtcdServiceInfoKey(this.sessionId, endpointid);
 		int etcdTTL = convertLongTTLToIntTTL(si.getTTL());
 		String siString = null;
 		try {
@@ -139,8 +149,8 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 				"Error in EtcdServiceInfo set request serviceInfo=" + si); //$NON-NLS-1$
 	}
 
-	protected String createFullKey(EtcdServiceInfoKey key) {
-		return this.directoryUrl + key.getFullKey();
+	private String createFullKey(EtcdServiceInfoKey key) {
+		return getDirectoryUrl() + key.getFullKey();
 	}
 
 	public void unregisterService(IServiceInfo serviceInfo) {
@@ -155,7 +165,7 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 				"Error in EtcdDeleteRequest with serviceInfo=" + serviceInfo); //$NON-NLS-1$
 	}
 
-	protected void executeEtcdRequest(String methodName, EtcdRequest request, String exceptionMessage) {
+	private void executeEtcdRequest(String methodName, EtcdRequest request, String exceptionMessage) {
 		try {
 			EtcdResponse response = request.execute();
 			if (response.isError())
@@ -170,8 +180,11 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 		return EtcdDiscoveryContainerInstantiator.NAME;
 	}
 
-	public synchronized void connect(ID aTargetID, IConnectContext connectContext) throws ContainerConnectException {
+	private String removeKeyPrefix(String key) {
+		return key.substring(this.keyPrefix.length());
+	}
 
+	public synchronized void connect(ID aTargetID, IConnectContext connectContext) throws ContainerConnectException {
 		if (this.targetID != null)
 			throw new ContainerConnectException("Already connected"); //$NON-NLS-1$
 		EtcdDiscoveryContainerConfig config = (EtcdDiscoveryContainerConfig) getConfig();
@@ -189,41 +202,51 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 			targetID = (EtcdServiceID) aTargetID;
 		}
 		trace("connect", "targetID=" + this.targetID); //$NON-NLS-1$ //$NON-NLS-2$
-
 		// Set sessionId from config
 		sessionId = config.getSessionId();
 		if (sessionId == null)
 			throw new ContainerConnectException("SessionId cannot be null"); //$NON-NLS-1$
-		trace("connect", "sessionId=" + this.sessionId); //$NON-NLS-1$ //$NON-NLS-2$
-
+		this.keyPrefix = verifySlash("/" + getID().getName()); //$NON-NLS-1$
 		// Then set directory URL
-		this.directoryUrl = verifySlash(verifySlash(this.targetID.getLocation().toString()) + getID().getName());
-		trace("connect", "directoryUrl=" + this.directoryUrl); //$NON-NLS-1$ //$NON-NLS-2$
-
-		// Do a get request on directoryUrl to verify that the
-		// EtcdDiscoveryContainer location
-		// is present on server (and that server is there)
+		this.dirUrl = this.targetID.getLocation().toString() + this.keyPrefix;
+		// Do a get request on directoryUrl to verify that the EtcdDiscoveryContainer
+		// location
+		// is present
 		try {
-			EtcdResponse directoryExistsResponse = new EtcdGetRequest(this.directoryUrl, false).execute();
-			if (directoryExistsResponse.isError()) {
-				trace("doConnect", "etcd directoryURL=" + this.directoryUrl + " does not exist, attempting to create"); //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
+			EtcdResponse topResponse = new EtcdGetRequest(getDirectoryUrl(), true).execute();
+			if (topResponse.isError()) {
+				trace("doConnect", "etcd directoryURL=" + getDirectoryUrl() + " does not exist, attempting to create"); //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
 				// Try to create directory
-				directoryExistsResponse = new EtcdSetRequest(this.directoryUrl).execute();
-				if (directoryExistsResponse.isError()) {
+				topResponse = new EtcdSetRequest(getDirectoryUrl()).execute();
+				if (topResponse.isError()) {
 					trace("doConnect ERROR", "etcd directoryURL could not be created, throwing"); //$NON-NLS-1$ //$NON-NLS-2$
-					throw new ContainerConnectException("Could not create etcd directoryURL=" + this.directoryUrl); //$NON-NLS-1$
+					throw new ContainerConnectException("Could not create etcd directoryURL=" + getDirectoryUrl()); //$NON-NLS-1$
 				}
 			}
+			EtcdSuccessResponse r = topResponse.getSuccessResponse();
+			EtcdNode node = r.getNode();
+			if (!node.isDirectory())
+				throw new ContainerConnectException("etcd directoryUrl=" + getDirectoryUrl() + " is not a directory"); //$NON-NLS-1$ //$NON-NLS-2$
+			this.etcdIndex = node.getCreatedIndex();
+			int sessionTTL = config.getSessionTTL();
+			// Now create a directory with our unique sessionid
+			EtcdResponse sessionExistsResponse = new EtcdSetRequest(getDirectoryUrl() + this.sessionId, sessionTTL)
+					.execute();
+			if (sessionExistsResponse.isError())
+				throw new ContainerConnectException("Could not create etcd session directory"); //$NON-NLS-1$
+
+			handleAddDirectory(node);
+			this.etcdIndex = sessionExistsResponse.getSuccessResponse().getNode().getCreatedIndex() + 1;
 			// Else the directory already exists or was successfully created
-			trace("connect", "Directory exists=" + this.directoryUrl); //$NON-NLS-1$ //$NON-NLS-2$
+			trace("connect", "directoryUrl=" + getDirectoryUrl() + this.sessionId); //$NON-NLS-1$ //$NON-NLS-2$
+			ttlJob = new TTLJob(sessionTTL);
+			ttlJob.schedule();
 			// Now setup and start discovery job
-			if (discoveryJob == null) {
-				discoveryJob = new EtcdDiscoveryJob();
-				discoveryJob.schedule();
-			}
+			discoveryJob = new EtcdDiscoveryJob();
+			discoveryJob.schedule();
 		} catch (EtcdException e) {
 			throw new ContainerConnectException(
-					"Exception communicating with etcd service at directoryURL=" + this.directoryUrl, e); //$NON-NLS-1$
+					"Exception communicating with etcd service at directoryURL=" + getDirectoryUrl(), e); //$NON-NLS-1$
 		}
 		// Fire container connected event
 		fireContainerEvent(new ContainerConnectedEvent(this.getID(), aTargetID));
@@ -237,35 +260,81 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 		if (targetID != null) {
 			ID anID = getConnectedID();
 			fireContainerEvent(new ContainerDisconnectingEvent(this.getID(), anID));
+			if (ttlJob != null) {
+				ttlJob.cancel();
+				ttlJob = null;
+			}
 			// If we haven't registered any service infos, then
 			try {
-				EtcdResponse response = new EtcdSetRequest(this.directoryUrl + this.sessionId, "c", //$NON-NLS-1$
-						((EtcdDiscoveryContainerConfig) getConfig()).getCloseTTL()).execute();
-				if (response.isError())
-					throw new EtcdException("Error in shudownEtcdConnection", response.getErrorResponse()); //$NON-NLS-1$
+				new EtcdDeleteRequest(getDirectoryUrl() + this.sessionId, true).execute();
+				Thread.sleep(200);
 			} catch (EtcdException e) {
 				logEtcdError("shutdownEtcdConnection", "Error with etcd shutdown", e); //$NON-NLS-1$ //$NON-NLS-2$
+			} catch (InterruptedException e) {
+				// Nothing to do
 			}
 			targetID = null;
+			sessionId = null;
+			keyPrefix = null;
+			dirUrl = null;
 			fireContainerEvent(new ContainerDisconnectedEvent(this.getID(), anID));
 		}
 	}
 
-	protected EtcdDiscoveryJob discoveryJob;
-	protected boolean done;
+	public class TTLJob extends Job {
+		
+		private static final int DELAY = 1000;
+		private int ttl;
+		
+		public TTLJob(int ttl) {
+			super("Etcd TTL Job"); //$NON-NLS-1$
+			this.ttl = ttl;
+		}
 
+		void trace(String message) {
+			LogUtility.trace("run", DebugOptions.TTLJOB, EtcdDiscoveryJob.class, message); //$NON-NLS-1$
+		}
+
+		@Override
+		protected IStatus run(IProgressMonitor arg0) {
+			trace("TTL Job starting"); //$NON-NLS-1$
+			long waittime = (this.ttl * 1000) - 2000;
+			while (true) {
+				if (arg0.isCanceled()) return Status.CANCEL_STATUS;
+				synchronized (this) {
+					try {
+						Thread.sleep(DELAY);
+						if (arg0.isCanceled()) return Status.CANCEL_STATUS;
+						waittime -= DELAY;
+						if (waittime <= 0) {
+							try {
+								new EtcdSetRequest(getDirectoryUrl() + EtcdDiscoveryContainer.this.sessionId, this.ttl, true).execute();
+							} catch (EtcdException e) {
+								logEtcdError("TTLJob.run","Exception sending ttl update",e);  //$NON-NLS-1$//$NON-NLS-2$
+							}
+							waittime = this.ttl * 1000;
+						} else 
+							trace("waittime="+waittime); //$NON-NLS-1$
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				wakeUp(DELAY);
+			}
+		}
+	}
+	
 	public class EtcdDiscoveryJob extends Job {
 
 		public EtcdDiscoveryJob() {
-			super("Etcd Discovery"); //$NON-NLS-1$
+			super("Etcd Watch Job"); //$NON-NLS-1$
 		}
-
-		private String etcdIndex;
 
 		private void computeNewEtcdIndex(EtcdNode node) {
 			int modifiedIndex = node.getModifiedIndex();
 			modifiedIndex += 1;
-			this.etcdIndex = Integer.toString(modifiedIndex);
+			etcdIndex = modifiedIndex;
 		}
 
 		void trace(String message) {
@@ -275,13 +344,12 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 		@Override
 		protected IStatus run(IProgressMonitor monitor) {
 			trace("watch job starting"); //$NON-NLS-1$
-			while (!done) {
+			while (!watchDone) {
 				if (monitor.isCanceled())
 					return Status.CANCEL_STATUS;
-				String url = EtcdDiscoveryContainer.this.directoryUrl;
+				String url = getDirectoryUrl();
 				try {
-					EtcdResponse response = (etcdIndex == null) ? new EtcdGetRequest(url, false).execute()
-							: new EtcdWatchRequest(url, etcdIndex).execute();
+					EtcdResponse response = new EtcdWatchRequest(url, Integer.toString(etcdIndex)).execute();
 					if (monitor.isCanceled())
 						return Status.CANCEL_STATUS;
 					if (targetID == null || sessionId == null)
@@ -292,11 +360,6 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 					} else {
 						EtcdSuccessResponse success = response.getSuccessResponse();
 						String action = success.getAction();
-						if (action == null) {
-							logEtcdError("handleEtcdWatchResponse", "Action in response cannot be null", //$NON-NLS-1$ //$NON-NLS-2$
-									new EtcdException("action cannot be null")); //$NON-NLS-1$
-							continue;
-						}
 						EtcdNode node = success.getNode();
 						if (node == null) {
 							logEtcdError("handleEtcdWatchResponse", "node in response cannot be null", //$NON-NLS-1$ //$NON-NLS-2$
@@ -304,12 +367,13 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 							continue;
 						}
 						String fullKey = node.getKey();
-						if (action.equals(EtcdProtocol.ACTION_SET) && fullKey.endsWith(sessionId)) {
+						// We will get a delete that ends with our session id
+						if (action.equals(EtcdProtocol.ACTION_DELETE) && fullKey.endsWith(sessionId)) {
 							// We have requested close
 							trace("fullKey=" + fullKey + " matched sessionId=" + sessionId + ". Thread loop is done"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-							done = true;
+							watchDone = true;
 						} else {
-							handleEtcdWatchResponse(action, fullKey, node);
+							handleEtcdWatchResponse(action, node);
 							computeNewEtcdIndex(node);
 						}
 					}
@@ -322,20 +386,14 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 		}
 	}
 
-	protected EtcdServiceInfoKey parseServiceInfoKey(String fullKey) {
-		// first strip off everything before final '/'
-		int lastSlashIndex = fullKey.lastIndexOf('/');
-		if (lastSlashIndex <= 0 || lastSlashIndex >= fullKey.length())
+	private EtcdServiceInfoKey parseServiceInfoKey(String fullKey) {
+		fullKey = removeKeyPrefix(fullKey);
+		// Now split into sessionKey/serviceInfoKey
+		int slashIndex = fullKey.lastIndexOf('/');
+		if (slashIndex < 0)
 			return null;
-		String serviceInfoKey = fullKey.substring(lastSlashIndex + 1);
-		if (serviceInfoKey == null)
-			return null;
-		// Now split into sessionKey.serviceInfoKey
-		int dotIndex = serviceInfoKey.lastIndexOf('.');
-		if (dotIndex < 0)
-			return null;
-		String sessionKey = serviceInfoKey.substring(0, dotIndex);
-		String siKey = serviceInfoKey.substring(dotIndex + 1);
+		String sessionKey = fullKey.substring(0, slashIndex);
+		String siKey = fullKey.substring(slashIndex + 1);
 		// Check to make sure sessionKey has UUID syntax
 		try {
 			UUID.fromString(sessionKey);
@@ -350,83 +408,164 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 		return new EtcdServiceInfoKey(sessionKey, siKey);
 	}
 
-	protected void handleEtcdWatchResponse(String action, String fullKey, EtcdNode node) {
-		trace("handleEtcdWatchResponse", "action=" + action + ",fullKey=" + fullKey + ",node=" + node); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-		EtcdServiceInfoKey siKey = parseServiceInfoKey(fullKey);
-		if (siKey == null) {
-			trace("handleEtcdServiceInfoDelete", "Could not parse fullKey=" + fullKey); //$NON-NLS-1$ //$NON-NLS-2$
-			return;
-		}
-		if (action.equals(EtcdProtocol.ACTION_UPDATE) || action.equals(EtcdProtocol.ACTION_GET)
-				|| action.equals(EtcdProtocol.ACTION_SET) || action.equals(EtcdProtocol.ACTION_CREATE)
-				|| action.equals(EtcdProtocol.ACTION_COMPARE_AND_SWAP))
-			handleEtcdServiceInfoAdd(action, siKey, node);
-		else if (action.equals(EtcdProtocol.ACTION_DELETE) || action.equals(EtcdProtocol.ACTION_EXPIRE)
-				|| action.equals(EtcdProtocol.ACTION_COMPARE_AND_DELETE))
-			handleEtcdServiceInfoDelete(action, siKey, node);
+	private void handleRemoveNode(EtcdNode node) {
+		trace("handleRemoveNode", "node=" + node); //$NON-NLS-1$ //$NON-NLS-2$
+		EtcdServiceInfoKey key = parseServiceInfoKey(node.getKey());
+		if (key != null) {
+			EtcdServiceInfo si = null;
+			synchronized (publishedServices) {
+				si = publishedServices.remove(key);
+				if (si != null)
+					fireServiceUndiscovered(si);
+			}
+		} else
+			logEtcdError("handleRemoveNode", "Could not get EtcdServiceInfoKey for node=" + node); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
-	protected void handleEtcdServiceInfoDelete(String action, EtcdServiceInfoKey key, EtcdNode node) {
-		// Now we actually do the delete. First create a EtcdServiceInfoKey
-		EtcdServiceInfo si = null;
-		synchronized (publishedServices) {
-			si = publishedServices.remove(key);
-		}
-		if (si != null)
-			fireServiceUndiscovered(si);
+	private void handleRemoveDirectory(EtcdNode node) {
+		trace("handleRemoveDirectory", "node=" + node); //$NON-NLS-1$ //$NON-NLS-2$
+		String sessionKey = removeKeyPrefix(node.getKey());
+		if (sessionKey != null) {
+			List<EtcdServiceInfo> removed = new ArrayList<EtcdServiceInfo>();
+			synchronized (publishedServices) {
+				for (EtcdServiceInfoKey key : publishedServices.keySet()) {
+					if (key.matchSessionId(sessionId)) {
+						EtcdServiceInfo esi = publishedServices.remove(key);
+						if (esi != null)
+							removed.add(esi);
+					}
+				}
+			}
+			removed.forEach(si -> fireServiceUndiscovered(si));
+		} else
+			logEtcdError("handleRemoveDirectory", "Could not get sessionKey for node=" + node); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
-	protected void fireServiceUndiscovered(IServiceInfo iinfo) {
-		Assert.isNotNull(iinfo);
-		if (getConfig() != null)
-			fireServiceUndiscovered(new ServiceContainerEvent(iinfo, getConfig().getID()));
+	private void handleAddNode(EtcdNode node) {
+		trace("handleAddNode", "node=" + node); //$NON-NLS-1$ //$NON-NLS-2$
+		EtcdServiceInfoKey siKey = parseServiceInfoKey(node.getKey());
+		if (siKey != null) {
+			EtcdServiceInfo si = null;
+			try {
+				si = EtcdServiceInfo.deserializeFromString(node.getValue());
+				synchronized (publishedServices) {
+					publishedServices.put(siKey, si);
+				}
+				fireServiceTypeDiscovered(si.getServiceID().getServiceTypeID());
+				fireServiceDiscovered(si);
+			} catch (JSONException e) {
+				logEtcdError("handleEtcdServiceInfoAdd", "Error deserializing nodeValue for node=" + node, //$NON-NLS-1$ //$NON-NLS-2$
+						new EtcdException(e));
+			}
+		} else
+			logEtcdError("handleAddNode", "Could not get key "); //$NON-NLS-1$ //$NON-NLS-2$
+	}
+
+	private void handleAddDirectory(EtcdNode node) {
+		trace("handleAddDirectory", "node=" + node); //$NON-NLS-1$ //$NON-NLS-2$
+		EtcdNode[] entryNodes = node.getNodes();
+		if (entryNodes != null)
+			for (EtcdNode en : entryNodes)
+				handleAddNode(en);
+	}
+
+	private void handleCreateAction(EtcdNode node) {
+		trace("handleExpireAction", "node=" + node); //$NON-NLS-1$ //$NON-NLS-2$
+		if (node.isDirectory()) {
+			handleAddDirectory(node);
+		} else {
+			handleAddNode(node);
+		}
+	}
+
+	private void handleDeleteAction(EtcdNode node) {
+		trace("handleDeleteAction", "node=" + node); //$NON-NLS-1$ //$NON-NLS-2$
+		if (node.isDirectory()) {
+			handleRemoveDirectory(node);
+		} else {
+			handleRemoveNode(node);
+		}
+	}
+
+	private void handleExpireAction(EtcdNode node) {
+		trace("handleExpireAction", "node=" + node); //$NON-NLS-1$ //$NON-NLS-2$
+		if (node.isDirectory()) {
+			handleRemoveDirectory(node);
+		} else {
+			handleRemoveNode(node);
+		}
+	}
+
+	private void handleGetAction(EtcdNode node) {
+		trace("handleGetAction", "node=" + node); //$NON-NLS-1$ //$NON-NLS-2$
+		if (node.isDirectory()) {
+			handleAddDirectory(node);
+		} else {
+			handleAddNode(node);
+		}
+	}
+
+	private void handleKeyAction(EtcdNode node) {
+		trace("handleKeyAction", "node=" + node); //$NON-NLS-1$ //$NON-NLS-2$
+	}
+
+	private void handleSetAction(EtcdNode node) {
+		trace("handleSetAction", "node=" + node); //$NON-NLS-1$ //$NON-NLS-2$
+		if (node.isDirectory()) {
+			handleAddDirectory(node);
+		} else {
+			handleAddNode(node);
+		}
+	}
+
+	private void handleUnexpectedAction(String action, EtcdNode node) {
+		trace("handleUnexpectedAction", "action="+action+",node=" + node); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+	}
+
+	private void handleEtcdWatchResponse(String action, EtcdNode node) {
+		trace("handleEtcdWatchResponse", "action=" + action + ",node=" + node); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+																				// //$NON-NLS-4$
+		if (action.equals(EtcdProtocol.ACTION_CREATE))
+			handleCreateAction(node);
+		else if (action.equals(EtcdProtocol.ACTION_DELETE))
+			handleDeleteAction(node);
+		else if (action.equals(EtcdProtocol.ACTION_EXPIRE))
+			handleExpireAction(node);
+		else if (action.equals(EtcdProtocol.ACTION_GET))
+			handleGetAction(node);
+		else if (action.equals(EtcdProtocol.ACTION_KEY))
+			handleKeyAction(node);
+		else if (action.equals(EtcdProtocol.ACTION_SET))
+			handleSetAction(node);
 		else
-			trace("fireServiceUndiscovered", "This IContainer is already disposed thus shouldn't fire events anymore"); //$NON-NLS-1$ //$NON-NLS-2$
+			handleUnexpectedAction(action,node);
 	}
 
-	protected void fireServiceDiscovered(IServiceInfo iinfo) {
-		Assert.isNotNull(iinfo);
-		if (getConfig() != null) {
-			fireServiceDiscovered(new ServiceContainerEvent(iinfo, getConfig().getID()));
-		} else
-			trace("fireServiceDiscovered(IServiceInfo iinfo)", //$NON-NLS-1$
-					"This IContainer is already disposed thus shouldn't fire events anymore"); //$NON-NLS-1$
+	private void fireServiceUndiscovered(IServiceInfo iinfo) {
+		fireServiceUndiscovered(new ServiceContainerEvent(iinfo, getConfig().getID()));
 	}
 
-	protected void fireServiceTypeDiscovered(IServiceTypeID serviceTypeID) {
-		Assert.isNotNull(serviceTypeID);
-		if (getConfig() != null) {
-			fireServiceTypeDiscovered(new ServiceTypeContainerEvent(serviceTypeID, getConfig().getID()));
-		} else
-			trace("fireServiceTypeDiscovered(IServiceInfo iinfo)", //$NON-NLS-1$
-					"This IContainer is already disposed thus shouldn't fire events anymore"); //$NON-NLS-1$
+	private void fireServiceDiscovered(IServiceInfo iinfo) {
+		fireServiceDiscovered(new ServiceContainerEvent(iinfo, getConfig().getID()));
 	}
 
-	protected void handleEtcdServiceInfoAdd(String action, EtcdServiceInfoKey key, EtcdNode node) {
-		String nodeValue = node.getValue();
-		EtcdServiceInfo si = null;
-		try {
-			si = EtcdServiceInfo.deserializeFromString(nodeValue);
-		} catch (JSONException e) {
-			logEtcdError("handleEtcdServiceInfoAdd", "Error deserializing nodeValue for node=" + node, //$NON-NLS-1$ //$NON-NLS-2$
-					new EtcdException(e));
-		}
-		synchronized (publishedServices) {
-			publishedServices.put(key, si);
-		}
-		fireServiceTypeDiscovered(si.getServiceID().getServiceTypeID());
-		fireServiceDiscovered(si);
+	private void fireServiceTypeDiscovered(IServiceTypeID serviceTypeID) {
+		fireServiceTypeDiscovered(new ServiceTypeContainerEvent(serviceTypeID, getConfig().getID()));
 	}
 
-	protected void trace(String methodName, String message) {
+	private void trace(String methodName, String message) {
 		LogUtility.trace(methodName, DebugOptions.DEBUG, getClass(), message);
 	}
 
-	protected void logEtcdError(String method, String message, EtcdException e) {
+	private void logEtcdError(String method, String message, EtcdException e) {
 		LogUtility.logError(method, DebugOptions.EXCEPTIONS_THROWING, getClass(), message, e);
 	}
 
-	protected void logAndThrowEtcdError(String method, String message, EtcdException e) {
+	private void logEtcdError(String method, String message) {
+		logEtcdError(method, message, null);
+	}
+
+	private void logAndThrowEtcdError(String method, String message, EtcdException e) {
 		logEtcdError(method, message, e);
 		throw new RuntimeException(message, e);
 	}
@@ -444,7 +583,7 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 		return publishedServices.values().toArray(new IServiceInfo[publishedServices.size()]);
 	}
 
-	protected Collection<EtcdServiceInfo> getLocalServices() {
+	private Collection<EtcdServiceInfo> getLocalServices() {
 		List<EtcdServiceInfo> results = new ArrayList<EtcdServiceInfo>();
 		synchronized (publishedServices) {
 			for (EtcdServiceInfoKey key : publishedServices.keySet())
