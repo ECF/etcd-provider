@@ -27,3 +27,4 @@ Export-Package: org.eclipse.ecf.internal.provider.etcd;x-internal:=true,
  org.eclipse.ecf.provider.etcd,
  org.eclipse.ecf.provider.etcd.identity
 Require-Bundle: org.eclipse.equinox.common
+Provide-Capability: osgi.remoteserviceadmin.discovery;protocols:List<String>="ETCD,ecf.discovery.etcd,ecf.discovery.etcd.locator,ecf.discovery.etcd.advertiser";version:Version=1.3
