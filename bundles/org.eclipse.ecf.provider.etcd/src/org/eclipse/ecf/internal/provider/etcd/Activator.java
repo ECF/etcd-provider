@@ -72,9 +72,8 @@ public class Activator implements BundleActivator {
 			String hostname = System.getProperty(EtcdDiscoveryContainerConfig.ETCD_TARGETID_HOSTNAME_PROP);
 			if (hostname == null) {
 				LogUtility.logError("createEtcdDiscoveryContainer", DebugOptions.DEBUG, Activator.class, //$NON-NLS-1$
-						"No etcd service hostname configured via system property=" //$NON-NLS-1$
-								+ EtcdDiscoveryContainerConfig.ETCD_TARGETID_HOSTNAME_PROP
-								+ ".  No EtcdDiscoveryContainer created"); //$NON-NLS-1$
+						"No EtcdDiscoveryContainer created.Etcd service hostname must be configured via system property=" //$NON-NLS-1$
+								+ EtcdDiscoveryContainerConfig.ETCD_TARGETID_HOSTNAME_PROP);
 				return;
 			}
 			config = new EtcdDiscoveryContainerConfig();

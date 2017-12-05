@@ -60,14 +60,18 @@ public class EtcdDiscoveryContainerConfig extends DiscoveryContainerConfig {
 	public static final String ETCD_TTL_PROP = EtcdDiscoveryContainerInstantiator.NAME + ".ttl"; //$NON-NLS-1$
 	public static final Integer ETCD_TTL_DEFAULT = Integer.getInteger(ETCD_TTL_PROP, 0);
 	
+	public static final String ETCD_CONTAINERID_PROP = EtcdDiscoveryContainerInstantiator.NAME + ".containerId"; //$NON-NLS-1$
+	public static final String ETCD_CONTAINERID_DEFAULT = EtcdDiscoveryContainer.class.getName();
+	
 	private EtcdServiceID targetID;
 	private String sessionId;
 	private long ttl = ETCD_TTL_DEFAULT.longValue();
 	private int sessionTTL = ETCD_SESSIONTTL_DEFAULT;
 	
 	public EtcdDiscoveryContainerConfig() throws MalformedURLException, URISyntaxException {
-		this(EtcdDiscoveryContainer.class.getName());
+		this(System.getProperty(ETCD_CONTAINERID_PROP,ETCD_CONTAINERID_DEFAULT));
 	}
+	
 	public EtcdDiscoveryContainerConfig(String containerId)
 			throws MalformedURLException, URISyntaxException {
 		super(IDFactory.getDefault().createStringID(containerId));
