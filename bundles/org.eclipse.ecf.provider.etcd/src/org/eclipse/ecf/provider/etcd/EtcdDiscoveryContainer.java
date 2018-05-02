@@ -346,9 +346,9 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 								logEtcdError("TTLJob.run", "Exception sending ttl update", e); //$NON-NLS-1$//$NON-NLS-2$
 							}
 							waittime = getStartWaitTime();
-						} else
-							trace("waittime=" + waittime); //$NON-NLS-1$
+						}
 					} catch (InterruptedException e) {
+						e.printStackTrace();
 					}
 				}
 			}

@@ -67,17 +67,9 @@ public class Activator implements BundleActivator {
 		context.registerService(Namespace.class, new EtcdNamespace(), null);
 		context.registerService(ContainerTypeDescription.class, ctd, null);
 
+		EtcdDiscoveryContainerConfig config = new EtcdDiscoveryContainerConfig();
+		EtcdDiscoveryContainer etcd = null;
 		try {
-			EtcdDiscoveryContainerConfig config = null;
-			String hostname = System.getProperty(EtcdDiscoveryContainerConfig.ETCD_TARGETID_HOSTNAME_PROP);
-			if (hostname == null) {
-				LogUtility.logError("createEtcdDiscoveryContainer", DebugOptions.DEBUG, Activator.class, //$NON-NLS-1$
-						"No EtcdDiscoveryContainer created.Etcd service hostname must be configured via system property=" //$NON-NLS-1$
-								+ EtcdDiscoveryContainerConfig.ETCD_TARGETID_HOSTNAME_PROP);
-				return;
-			}
-			config = new EtcdDiscoveryContainerConfig();
-			EtcdDiscoveryContainer etcd = null;
 			if (config != null)
 				etcd = getContainer(config);
 			if (etcd != null) {
@@ -90,8 +82,10 @@ public class Activator implements BundleActivator {
 						props);
 			}
 		} catch (Exception e1) {
-			LogUtility.logError("start", DebugOptions.DEBUG, this.getClass(), "Etcd container creation failed", e1); //$NON-NLS-1$//$NON-NLS-2$
+			LogUtility.logError("start", DebugOptions.DEBUG, this.getClass(), "Etcd discovery setup failed", e1); //$NON-NLS-1$//$NON-NLS-2$
 		}
+		LogUtility.logInfo("start", DebugOptions.DEBUG, this.getClass(), //$NON-NLS-1$
+				"Etcd discovery connected to service=" + config.getTargetID().getLocation().toString()); //$NON-NLS-1$
 	}
 
 	public void stop(BundleContext context) throws Exception {
