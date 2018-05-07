@@ -214,7 +214,6 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 				throw new ContainerConnectException("targetID must be of type EtcdServiceID"); //$NON-NLS-1$
 			etcdTargetID = (EtcdServiceID) aTargetID;
 		}
-		trace("connect", "targetID=" + this.etcdTargetID); //$NON-NLS-1$ //$NON-NLS-2$
 		// Set sessionId from config
 		localSessionId = config.getSessionId();
 		if (localSessionId == null)
@@ -228,7 +227,7 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 		try {
 			EtcdResponse topResponse = new EtcdGetRequest(getDirectoryUrl(), true).execute();
 			if (topResponse.isError()) {
-				trace("doConnect", "etcd directoryURL=" + getDirectoryUrl() + " does not exist, attempting to create"); //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
+				trace("connect", "etcd directoryURL=" + getDirectoryUrl() + " does not exist, attempting to create"); //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
 				// Try to create directory
 				topResponse = new EtcdSetRequest(getDirectoryUrl()).execute();
 				if (topResponse.isError()) {
@@ -250,8 +249,6 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 			if (sessionExistsResponse.isError())
 				throw new ContainerConnectException("Could not create etcd session directory"); //$NON-NLS-1$
 			this.watchIndex = sessionExistsResponse.getSuccessResponse().getNode().getCreatedIndex() + 1;
-			// Else the directory already exists or was successfully created
-			trace("connect", "directoryUrl=" + getDirectoryUrl() + this.localSessionId); //$NON-NLS-1$ //$NON-NLS-2$
 			ttlJob = new EtcdTTLJob(sessionTTL);
 			ttlJob.schedule();
 			// Now setup and start discovery job
@@ -322,7 +319,7 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 		}
 
 		void trace(String message) {
-			LogUtility.trace("run", DebugOptions.TTLJOB, EtcdWatchJob.class, message); //$NON-NLS-1$
+			LogUtility.trace("run", DebugOptions.TTLJOB, EtcdTTLJob.class, message); //$NON-NLS-1$
 		}
 
 		@Override
@@ -371,7 +368,7 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 
 		@Override
 		protected IStatus run(IProgressMonitor monitor) {
-			trace("watch job starting"); //$NON-NLS-1$
+			trace("Watch Job starting"); //$NON-NLS-1$
 			while (!watchDone) {
 				if (monitor.isCanceled())
 					return Status.CANCEL_STATUS;
@@ -401,7 +398,6 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 							watchDone = true;
 							continue;
 						} else if (fullKey.endsWith(localSessionId) || noPrefix.startsWith(localSessionId)) {
-							trace("watch job ignore our session node=" + node); //$NON-NLS-1$
 							setNewEtcdIndex(node);
 							continue;
 						} else {

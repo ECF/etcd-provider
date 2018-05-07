@@ -85,7 +85,7 @@ public class Activator implements BundleActivator {
 			LogUtility.logError("start", DebugOptions.DEBUG, this.getClass(), "Etcd discovery setup failed", e1); //$NON-NLS-1$//$NON-NLS-2$
 		}
 		LogUtility.logInfo("start", DebugOptions.DEBUG, this.getClass(), //$NON-NLS-1$
-				"Etcd discovery connected to service=" + config.getTargetID().getLocation().toString()); //$NON-NLS-1$
+				"Discovery connected to Etcd server at url=" + config.getTargetID().getLocation().toString()); //$NON-NLS-1$
 	}
 
 	public void stop(BundleContext context) throws Exception {
