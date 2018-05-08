@@ -10,6 +10,7 @@ package org.eclipse.ecf.internal.provider.etcd.protocol;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
@@ -63,7 +64,9 @@ public abstract class EtcdRequest extends EtcdProtocol {
 		try {
 			return new EtcdSuccessResponse(readStream(conn.getInputStream()),
 					conn.getHeaderFields());
-		} catch (IOException e) {
+		} catch (ConnectException e) {
+			throw e;
+		} catch (Exception e) {
 			return new EtcdErrorResponse(readStream(conn.getErrorStream()),
 					conn.getHeaderFields());
 		}
@@ -117,11 +120,11 @@ public abstract class EtcdRequest extends EtcdProtocol {
 			setRequestMethod(conn);
 			return getResponseOrError(conn);
 		} catch (MalformedURLException e) {
-			throw new EtcdException("Url is malformed=" + url, e); //$NON-NLS-1$ 
+			throw new EtcdException("Server url is malformed=" + url, e); //$NON-NLS-1$ 
 		} catch (IOException e) {
-			throw new EtcdException("Error communicating with server at "+url, e); //$NON-NLS-1$
+			throw new EtcdException("Error communicating with server at url="+url, e); //$NON-NLS-1$
 		} catch (JSONException e) {
-			throw new EtcdException("Parsing error for url="+url, e); //$NON-NLS-1$
+			throw new EtcdException("Parsing error communicating with server url="+url, e); //$NON-NLS-1$
 		} finally {
 			if (conn != null)
 				conn.disconnect();

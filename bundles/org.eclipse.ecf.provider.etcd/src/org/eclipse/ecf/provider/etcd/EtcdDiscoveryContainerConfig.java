@@ -63,10 +63,14 @@ public class EtcdDiscoveryContainerConfig extends DiscoveryContainerConfig {
 	public static final String ETCD_CONTAINERID_PROP = EtcdDiscoveryContainerInstantiator.NAME + ".containerId"; //$NON-NLS-1$
 	public static final String ETCD_CONTAINERID_DEFAULT = EtcdDiscoveryContainer.class.getName();
 	
+	public static final String ETCD_STARTDELAY_PROP = EtcdDiscoveryContainerInstantiator.NAME + ".startDelay"; //$NON-NLS-1$
+	public static final int ETCD_STARTDELAY_DEFAULT = Integer.getInteger(ETCD_STARTDELAY_PROP, 5000);
+	
 	private EtcdServiceID targetID;
 	private String sessionId;
 	private long ttl = ETCD_TTL_DEFAULT.longValue();
 	private int sessionTTL = ETCD_SESSIONTTL_DEFAULT;
+	private int startDelay = ETCD_STARTDELAY_DEFAULT;
 	
 	public EtcdDiscoveryContainerConfig() throws MalformedURLException, URISyntaxException {
 		this(System.getProperty(ETCD_CONTAINERID_PROP,ETCD_CONTAINERID_DEFAULT));
@@ -150,5 +154,12 @@ public class EtcdDiscoveryContainerConfig extends DiscoveryContainerConfig {
 	public long getTTL() {
 		return this.ttl;
 	}
+	
+	public int getStartDelay() {
+		return this.startDelay;
+	}
 
+	public void setStartDelay(int startDelay) {
+		this.startDelay = startDelay;
+	}
 }
