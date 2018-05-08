@@ -256,6 +256,7 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 			if (sessionExistsResponse.isError())
 				throw new ContainerConnectException("Could not create etcd session directory for sessionDirectory=" //$NON-NLS-1$
 						+ directoryUrl + localSessionId);
+			trace("connect","client connected to etcd server at url="+ directoryUrl + localSessionId + " ttl="+sessionTTL); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 			// set watchIndex to createdIndex + 1
 			watchIndex = sessionExistsResponse.getSuccessResponse().getNode().getCreatedIndex() + 1;
 		} catch (EtcdException e) {
