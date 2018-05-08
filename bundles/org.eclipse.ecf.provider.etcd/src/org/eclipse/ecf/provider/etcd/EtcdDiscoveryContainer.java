@@ -150,6 +150,7 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 		}
 		String fullKey = createFullKey(siKey);
 		synchronized (services) {
+			startWatchJob();
 			executeEtcdRequest("registerService", //$NON-NLS-1$
 					new EtcdSetRequest(fullKey, siString, etcdTTL),
 					"Error in EtcdServiceInfo set request serviceInfo=" + si); //$NON-NLS-1$
@@ -233,7 +234,7 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 		this.dirUrl = this.etcdTargetID.getLocation().toString() + this.keyPrefix;
 
 		String directoryUrl = getDirectoryUrl();
-		int startDelay = config.getStartDelay();
+		int sessionTTL = config.getSessionTTL();
 		try {
 			EtcdResponse topResponse = new EtcdGetRequest(directoryUrl, true).execute();
 			if (topResponse.isError()) {
@@ -247,55 +248,55 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 			// If the topNode is not a directory, then we can't continue
 			if (!tn.isDirectory())
 				throw new ContainerConnectException("etcd directoryUrl=" + directoryUrl + " is not a directory"); //$NON-NLS-1$//$NON-NLS-2$
-			// Set the top node for later discovery
+			// Set the top node for later discovery via watch job
 			this.topNode = tn;
-			// Otherwise we are good to go
-			watchIndex = topNode.getCreatedIndex();
-			int sessionTTL = getEtcdConfig().getSessionTTL();
 			// create a directory with our unique sessionid
 			EtcdResponse sessionExistsResponse = new EtcdSetRequest(directoryUrl + localSessionId, sessionTTL)
 					.execute();
 			if (sessionExistsResponse.isError())
 				throw new ContainerConnectException("Could not create etcd session directory for sessionDirectory=" //$NON-NLS-1$
 						+ directoryUrl + localSessionId);
+			// set watchIndex to createdIndex + 1
 			watchIndex = sessionExistsResponse.getSuccessResponse().getNode().getCreatedIndex() + 1;
-			ttlJob = new EtcdTTLJob(sessionTTL, startDelay);
-			watchJob = new EtcdWatchJob();
 		} catch (EtcdException e) {
 			throw new ContainerConnectException("Could not communicate with etcd server at url=" + directoryUrl, e); //$NON-NLS-1$
 		}
+		
+		ttlJob = new EtcdTTLJob(sessionTTL);
+		watchJob = new EtcdWatchJob();
+		// schedule ttlJob right away
+		ttlJob.schedule();
 		// Fire container connected event
 		fireContainerEvent(new ContainerConnectedEvent(this.getID(), aTargetID));
 	}
 
 	EtcdNode topNode;
 
-	private void startJobs() {
+	private void startWatchJob() {
 		if (watchJob != null && watchJob.getState() == Job.NONE) {
-			trace("startJobs", "starting watchJob and ttlJob");  //$NON-NLS-1$//$NON-NLS-2$
+			trace("startWatchJob", "starting watchJob");  //$NON-NLS-1$//$NON-NLS-2$
 			int startDelay = getEtcdConfig().getStartDelay();
 			watchJob.schedule(startDelay);
-			ttlJob.schedule(startDelay);
 		}
 	}
 	
 	public void addServiceListener(final IServiceListener aListener) {
 		synchronized(services) {
-			startJobs();
+			startWatchJob();
 		}
 		super.addServiceListener(aListener);
 	}
 	
 	public void addServiceListener(final IServiceTypeID aType, final IServiceListener aListener) {
 		synchronized(services) {
-			startJobs();
+			startWatchJob();
 		}
 		super.addServiceListener(aType, aListener);
 	}
 	
 	public void addServiceTypeListener(IServiceTypeListener aListener) {
 		synchronized(services) {
-			startJobs();
+			startWatchJob();
 		}
 	}
 	
@@ -348,12 +349,10 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 
 		private static final int DELAY = 1000;
 		private int ttl;
-		private int startDelay;
 		
-		public EtcdTTLJob(int ttl, int startDelay) {
+		public EtcdTTLJob(int ttl) {
 			super("Etcd TTL Job"); //$NON-NLS-1$
 			this.ttl = ttl;
-			this.startDelay = startDelay;
 		}
 
 		private long getStartWaitTime() {
@@ -368,7 +367,7 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 		@Override
 		protected IStatus run(IProgressMonitor arg0) {
 			trace("Etcd TTL Job starting"); //$NON-NLS-1$
-			long waittime = getStartWaitTime() - startDelay;
+			long waittime = getStartWaitTime();
 			while (true) {
 				if (arg0.isCanceled())
 					return Status.CANCEL_STATUS;
