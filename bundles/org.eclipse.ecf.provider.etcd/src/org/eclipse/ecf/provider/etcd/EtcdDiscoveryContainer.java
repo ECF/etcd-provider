@@ -451,7 +451,7 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 							setNewEtcdIndex(node);
 						}
 					}
-				} catch (EtcdException e) {
+				} catch (Exception e) {
 					logEtcdError("watchJob.run", "Unexpected exception in watch job", e); //$NON-NLS-1$ //$NON-NLS-2$
 				}
 			}

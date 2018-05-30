@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: %bundleName
 Bundle-SymbolicName: org.eclipse.ecf.provider.etcd
 Automatic-Module-Name: org.eclipse.ecf.provider.etcd
-Bundle-Version: 1.4.0.qualifier
+Bundle-Version: 1.4.1.qualifier
 Bundle-Vendor: %bundleProvider
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-Localization: bundle
