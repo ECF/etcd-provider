@@ -14,7 +14,9 @@ The most important properties are:
 Property Name                       Default Value
 
 ecf.discovery.etcd.hostname         127.0.0.1
+
 ecf.discovery.etcd.port             2379
+
 ecf.discovery.etcd.containerId      org.eclipse.ecf.provider.etcd.EtcdDiscoveryContainer 
 
 
