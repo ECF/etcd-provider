@@ -13,11 +13,11 @@ The most important properties are:
 
 Property Name                       Default Value
 
-'''ecf.discovery.etcd.hostname'''         '''127.0.0.1'''
+**ecf.discovery.etcd.hostname         127.0.0.1**
 
-'''ecf.discovery.etcd.port'''             '''2379'''
+**ecf.discovery.etcd.port             2379**
 
-'''ecf.discovery.etcd.containerId'''      '''org.eclipse.ecf.provider.etcd.EtcdDiscoveryContainer'''
+**ecf.discovery.etcd.containerId      org.eclipse.ecf.provider.etcd.EtcdDiscoveryContainer**
 
 
 For example, to set the etcd server to:  'disco.ecf-project.org' set the java system propery...e.g. 
