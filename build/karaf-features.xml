@@ -1,8 +1,8 @@
 <features xmlns="http://karaf.apache.org/xmlns/features/v1.2.0" name="ecf-discovery-etcd-1.4.1">
 
-<feature name="ecf-remoteservices-discprovider-etcd" version="1.4.1" description="ECF RemoteServices Etcd Discovery Provider">
-	<bundle>https://raw.githubusercontent.com/ECF/ECF/etcd-provider/master/build/plugins/org.eclipse.ecf.provider.etcd_1.4.1.201806122014.jar</bundle>
-</feature>
-
+        <feature name="ecf-rs-discovery-etcd" version="1.4.1" description="ECF Etcd Discovery Provider.  See https://github.com/ECF/etcd-provider">
+	            <bundle>https://raw.githubusercontent.com/ECF/etcd-provider/master/build/plugins/org.eclipse.ecf.provider.etcd_1.4.1.201806122014.jar</bundle>
+		        <bundle>mvn:org.eclipse.ecf/org.json/1.0.0.v201011060100</bundle>
+        </feature>
 </features>
 
