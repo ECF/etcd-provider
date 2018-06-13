@@ -24,5 +24,5 @@ For example, to set the etcd server to:  'disco.ecf-project.org' set the java sy
 LICENSE
 =======
 
-Python.Java Remote Services is distributed with the Apache3 license. See LICENSE in this directory for more
+Python.Java Remote Services is distributed with the Apache 2 license. See LICENSE in this directory for more
 information.
