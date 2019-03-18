@@ -31,6 +31,11 @@
                   <type>target</type>
                   <classifier>ecf-neon</classifier>
                 </artifact>
+                <artifact>
+                  <file>ecf-photon.target</file>
+                  <type>target</type>
+                  <classifier>ecf-photon</classifier>
+                </artifact>
               </artifacts>
             </configuration>
           </execution>
