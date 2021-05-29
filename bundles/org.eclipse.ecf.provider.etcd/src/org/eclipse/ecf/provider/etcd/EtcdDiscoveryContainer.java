@@ -632,6 +632,7 @@ public class EtcdDiscoveryContainer extends AbstractDiscoveryContainerAdapter {
 			handleUnexpectedAction(action, node);
 	}
 
+	
 	private void fireServiceUndiscovered(String key, IServiceInfo iinfo) {
 		trace("fireServiceUndiscovered", "key=" + key + ",serviceInfo=" + iinfo); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		fireServiceUndiscovered(new ServiceContainerEvent(iinfo, getConfig().getID()));
