@@ -1,7 +1,7 @@
-etcd-provider
+etcd2-provider
 =============
 
-ECF discovery provider that uses etcd service to publish and discover remote service endpoint descriptions.   See https://github.com/coreos/etcd to download, install, and configure the etcd server.   
+ECF discovery provider that uses etcd2 service to publish and discover remote service endpoint descriptions.   See https://github.com/coreos/etcd to download, install, and configure the etcd server.   
 
 This provider used an etcd server to publish and discover Remote Services.   It's necessary to install the provider bundle:  org.eclipse.ecf.provider.etcd, and configure it so that it points to a running etcd server/service.
 
@@ -24,5 +24,5 @@ For example, to set the etcd server to:  'disco.ecf-project.org' set the java sy
 LICENSE
 =======
 
-Python.Java Remote Services is distributed with the Apache 2 license. See LICENSE in this directory for more
+The ECF etcd3 discovery provider is distributed with the Apache 2 license. See LICENSE in this directory for more
 information.
